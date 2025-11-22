@@ -1,2 +1,2 @@
 # HCI-Group-Assignment
-HCI UFO Sighting Group Assessment
+HCI UFO Sighting Group Assessment.
