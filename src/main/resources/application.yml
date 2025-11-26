@@ -1,0 +1,47 @@
+spring:
+  application:
+    name: ufo-sightings
+
+  datasource:
+    url: jdbc:h2:~/h2/test;AUTO_SERVER=TRUE;MODE=Oracle;DEFAULT_NULL_ORDERING=HIGH;NON_KEYWORDS=VALUE
+    username: sa
+    password:
+
+  threads:
+    virtual:
+      enabled: true
+
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.xml
+    enabled: true
+
+  h2:
+    console:
+      enabled: false
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+server:
+  port: 8080
+  servlet:
+    context-path: /ufo-app
+
+logging:
+    level:
+        root: debug
+        sun: info
+        javax: info
+        jakarta: info
+        web: debug
+        org:
+        apache: info
+        springframework: info
+        hibernate:
+            type:
+            descriptor: trace
