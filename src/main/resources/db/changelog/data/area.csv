@@ -1,0 +1,6 @@
+area_id,area_name,description,priority
+1,North Zone,The northern area of the region,LOW
+2,South Zone,The southern area of the region,MEDIUM
+3,East Zone,The eastern area of the region,HIGH
+4,West Zone,The western area of the region,VERY_HIGH
+5,Central Zone,The central area of the region,MEDIUM
