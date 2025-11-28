@@ -2,12 +2,47 @@
 <html xmlns:th="http://www.thymeleaf.org" lang="">
 <head>
     <link rel="stylesheet" th:href="@{/css/style.css}">
-    <title>Room Usage</title>
+    <title>Data Overview</title>
 </head>
 <body>
 
-<div class="testDiv">
-    <p th:text="${message}"></p>
+<h1>Hello, World!</h1>
+
+<div>
+    <h2>Users</h2>
+    <ul>
+        <li th:each="user : ${users}">
+            <span th:text="${user.userId}"></span> -
+            <span th:text="${user.username}"></span> -
+            <span th:text="${user.firstName}"></span>
+            <span th:text="${user.secondName}"></span>
+            (<span th:text="${user.email}"></span>)
+        </li>
+        <li th:if="${users == null or #lists.isEmpty(users)}">No users</li>
+    </ul>
+</div>
+
+<div>
+    <h2>Areas</h2>
+    <ul>
+        <li th:each="area : ${areas}">
+            <span th:text="${area.areaId}"></span> -
+            <span th:text="${area.areaName}"></span> -
+            <span th:text="${area.areaPriority}"></span>
+        </li>
+        <li th:if="${areas == null or #lists.isEmpty(areas)}">No areas</li>
+    </ul>
+</div>
+
+<div>
+    <h2>Teams</h2>
+    <ul>
+        <li th:each="team : ${teams}">
+            <span th:text="${team.teamId}"></span> -
+            <span th:text="${team.teamName}"></span>
+        </li>
+        <li th:if="${teams == null or #lists.isEmpty(teams)}">No teams</li>
+    </ul>
 </div>
 
 </body>
