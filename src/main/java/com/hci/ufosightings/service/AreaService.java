@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -21,10 +22,8 @@ public class AreaService {
     }
 
     public List<User> getAssignedUsers(Long areaId) {
-        Area area = areaDao.findById(areaId).orElse(null);
-        if (area != null) {
-            return area.getAssignedUsers();
-        }
-        return null;
+        return areaDao.findById(areaId)
+                .map(Area::getAssignedUsers)
+                .orElse(Collections.emptyList());
     }
 }

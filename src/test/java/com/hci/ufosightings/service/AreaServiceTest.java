@@ -54,12 +54,12 @@ class AreaServiceTest {
     }
 
     @Test
-    void getAssignedUsers_areaDoesNotExist_returnsNull() {
+    void getAssignedUsers_areaDoesNotExist_returnsEmptyList() {
         when(areaDao.findById(99L)).thenReturn(Optional.empty());
 
         List<User> actual = areaService.getAssignedUsers(99L);
 
-        assertNull(actual);
+        assertTrue(actual.isEmpty());
         verify(areaDao, times(1)).findById(99L);
     }
 }
