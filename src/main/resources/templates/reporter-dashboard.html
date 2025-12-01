@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="">
+<style>
+    div.div1 {
+    width: 45%;
+    display: inline-block;
+    float: left;
+    background-color: gray;
+    margin-right: 2.5%;
+    margin-left: 2.5%;
+    }
+    ul {
+    list-style-type: none;
+    }
+</style>
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <title>Reporter Dashboard</title>
+</head>
+<body>
+<h1>Dashboard</h1>
+
+<div th:insert="navbar :: navbar">  </div>
+
+<div class="div1">
+    <h3 align="center">My Assignments</h3>
+    <ul>
+        <li th:each="assignment : ${AreaAssignments}">
+            <span th:text="${assignment.assignedAt}"></span>
+            <span th:text="${assignment.status}"></span>
+        </li>
+        <li th:if="${assignment == null or #lists.isEmpty(assignments)}">No current assignments.</li>
+    </ul>
+</div>
+<div class="div1">
+    <h3 align="center">Team's Recent Activity</h3>
+        <ul>
+            <li th:each="activity : ${activities}">
+                <span th:text="${activity.activityName}"></span>
+                <span th:text="${activity.activityData}"></span>
+            </li>
+            <li th:if="${activity == null or #lists.isEmpty(activities)}">No recent activity.</li>
+        </ul>
+    <div class="div1">
+        <h3 align="center">Notifications</h3>
+        <ul>
+            <li th:each="notification : ${notifications}">
+                <span th:text="${notification.notificationTitle}"></span>
+                <span th:text="${notification.notificationBody}"></span>
+            </li>
+            <li th:if="${notification == null or #lists.isEmpty(notifications)}">No recent notifications.</li>
+        </ul>
+        <div class="div1" align="left"><button>Open All</button></div>
+        <div class="div1" align="right"><button>Clear All</button></div>
+    </div>
+    <div class="div1">
+        <h3 align="center">Team Chat</h3>
+        <ul>
+            <li th:each="chat : ${chatLog}">
+                <span th:text="${chat.chatType}"></span>
+            </li>
+            <li th:if="${chat == null or #lists.isEmpty(chatLog)}">No new messages.</li>
+        </ul>
+        <div align="right"><button>Open Live Chat</button></div>
+    </div>
+</div>
+
+</body>
+</html>
