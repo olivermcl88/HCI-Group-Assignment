@@ -26,11 +26,11 @@
 <div class="div1">
     <h3 align="center">My Assignments</h3>
     <ul>
-        <li th:each="assignment : ${AreaAssignments}">
+        <li th:each="assignment : ${areaAssignments}">
             <span th:text="${assignment.assignedAt}"></span>
             <span th:text="${assignment.status}"></span>
         </li>
-        <li th:if="${assignment == null or #lists.isEmpty(assignments)}">No current assignments.</li>
+        <li th:if="${areaAssignments == null or #lists.isEmpty(areaAssignments)}">No current assignments.</li>
     </ul>
 </div>
 <div class="div1">
@@ -40,16 +40,16 @@
                 <span th:text="${activity.activityName}"></span>
                 <span th:text="${activity.activityData}"></span>
             </li>
-            <li th:if="${activity == null or #lists.isEmpty(activities)}">No recent activity.</li>
+            <li th:if="${activities == null or #lists.isEmpty(activities)}">No recent activity.</li>
         </ul>
     <div class="div1">
         <h3 align="center">Notifications</h3>
         <ul>
             <li th:each="notification : ${notifications}">
-                <span th:text="${notification.notificationTitle}"></span>
-                <span th:text="${notification.notificationBody}"></span>
+                <span th:text="${notification.title}"></span>
+                <span th:text="${notification.message}"></span>
             </li>
-            <li th:if="${notification == null or #lists.isEmpty(notifications)}">No recent notifications.</li>
+            <li th:if="${notifications == null or #lists.isEmpty(notifications)}">No recent notifications.</li>
         </ul>
         <div class="div1" align="left"><button>Open All</button></div>
         <div class="div1" align="right"><button>Clear All</button></div>
@@ -60,7 +60,7 @@
             <li th:each="chat : ${chatLog}">
                 <span th:text="${chat.chatType}"></span>
             </li>
-            <li th:if="${chat == null or #lists.isEmpty(chatLog)}">No new messages.</li>
+            <li th:if="${chatLog == null or #lists.isEmpty(chatLog)}">No new messages.</li>
         </ul>
         <div align="right"><button>Open Live Chat</button></div>
     </div>

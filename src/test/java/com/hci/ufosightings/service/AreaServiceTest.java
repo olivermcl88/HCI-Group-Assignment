@@ -1,6 +1,9 @@
 package com.hci.ufosightings.service;
 
 import com.hci.ufosightings.common.Area;
+import com.hci.ufosightings.common.AreaAssignments;
+import com.hci.ufosightings.common.AreaAssignmentsId;
+import com.hci.ufosightings.common.AssignmentStatus;
 import com.hci.ufosightings.common.User;
 import com.hci.ufosightings.dao.AreaDao;
 import org.junit.jupiter.api.Test;
@@ -9,6 +12,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -41,7 +45,18 @@ class AreaServiceTest {
     @Test
     void getAssignedUsers_areaExists_returnsAssignedUsers() {
         User user = User.builder().userId(10L).username("bob").build();
-        Area area = Area.builder().areaId(5L).assignedUsers(List.of(user)).build();
+        Area area = Area.builder().areaId(5L).build();
+
+        AreaAssignmentsId aid = new AreaAssignmentsId(5L, 10L);
+        AreaAssignments assignment = AreaAssignments.builder()
+                .id(aid)
+                .user(user)
+                .area(area)
+                .assignedAt(LocalDate.now())
+                .status(AssignmentStatus.ACTIVE)
+                .build();
+
+        area.setAssignments(List.of(assignment));
 
         when(areaDao.findById(5L)).thenReturn(Optional.of(area));
 
@@ -49,7 +64,7 @@ class AreaServiceTest {
 
         assertNotNull(actual);
         assertEquals(1, actual.size());
-        assertEquals(user, actual.getFirst());
+        assertEquals(user, actual.get(0));
         verify(areaDao, times(1)).findById(5L);
     }
 
@@ -63,4 +78,3 @@ class AreaServiceTest {
         verify(areaDao, times(1)).findById(99L);
     }
 }
-

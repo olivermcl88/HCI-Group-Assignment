@@ -4,8 +4,6 @@ package com.hci.ufosightings.common;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.List;
-
 @Getter
 @Setter
 @Data
@@ -13,16 +11,19 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-@Table(name = "area")
+@Table(name = "notification")
 public class Notification {
 
     @Id
     @Column(name="noti_id", nullable = false, unique = true)
     private Long notiId;
 
-    @Column(name="noti_name", nullable = false, unique = true)
-    private String notiName;
+    @Column(name="user_id", nullable = false)
+    private Long userId;
 
-    @Column(name="description", nullable = false)
-    private String description;
+    @Column(name="title", nullable = false)
+    private String title;
+
+    @Column(name="message", nullable = false)
+    private String message;
 }

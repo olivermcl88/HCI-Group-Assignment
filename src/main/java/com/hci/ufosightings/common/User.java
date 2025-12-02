@@ -5,6 +5,7 @@ import lombok.*;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Getter
 @Setter
@@ -41,9 +42,13 @@ public class User {
     @Column(name="team_id", nullable = false)
     private Long teamId;
 
-    @ManyToMany
-    @JoinTable(name = "area_assignments")
-    List<Area> assignments;
+    @OneToMany(mappedBy = "user")
+    private List<AreaAssignments> areaAssignments;
+
+    public List<Area> getAssignments() {
+        if (areaAssignments == null) return List.of();
+        return areaAssignments.stream().map(AreaAssignments::getArea).collect(Collectors.toList());
+    }
 
     @Override
     public int hashCode() {

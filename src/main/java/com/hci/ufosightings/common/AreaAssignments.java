@@ -23,6 +23,11 @@ public class AreaAssignments {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    @MapsId("areaId")
+    @ManyToOne
+    @JoinColumn(name = "area_id", nullable = false)
+    private Area area;
+
     @Column(name="assigned_at", nullable = false)
     private LocalDate assignedAt;
 
