@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <title>Assignments</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .header {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 28px;
+        }
+
+        .main-container {
+            display: flex;
+            gap: 0;
+            height: calc(100vh - 140px);
+        }
+
+        /* Kanban Board Columns */
+        .kanban-board {
+            flex: 1;
+            display: flex;
+            gap: 20px;
+            overflow-x: auto;
+            padding-right: 20px;
+        }
+
+        .kanban-column {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            padding: 15px;
+            min-width: 300px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .column-header {
+            padding: 12px;
+            border-bottom: 2px solid #333;
+            margin-bottom: 15px;
+            text-align: center;
+            font-weight: bold;
+            color: #333;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .unassigned-header {
+            border-bottom-color: #666;
+        }
+
+        .pending-header {
+            border-bottom-color: #666;
+        }
+
+        .active-header {
+            border-bottom-color: #666;
+        }
+
+        .cards-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 5px;
+        }
+
+        .card {
+            background: #fafafa;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            padding: 12px;
+            margin-bottom: 10px;
+            cursor: move;
+            transition: all 0.2s ease;
+        }
+
+        .card:hover {
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .card.dragging {
+            opacity: 0.5;
+        }
+
+        .card-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 6px;
+            font-size: 14px;
+        }
+
+        .card-location {
+            color: #666;
+            font-size: 12px;
+            margin-bottom: 6px;
+        }
+
+        .card-priority {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 10px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+        }
+
+        .priority-high {
+            background: #ff0000;
+            color: white;
+        }
+
+        .priority-medium {
+            background: #ffaa00;
+            color: white;
+        }
+
+        .priority-low {
+            background: #00ff0d;
+            color: white;
+        }
+
+        .card-assignee {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid #e0e0e0;
+            font-size: 11px;
+            color: #000000;
+        }
+
+        .assignee-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #666;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 10px;
+        }
+
+        /* Right Sidebar */
+        .sidebar {
+            width: 280px;
+            background: white;
+            border-left: 2px solid #e0e0e0;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .sidebar h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 16px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .team-member-card {
+            background: #fafafa;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            padding: 12px;
+            margin-bottom: 12px;
+            transition: all 0.2s ease;
+        }
+
+        .team-member-card:hover {
+            background: white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        }
+
+        .member-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .member-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #666;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .member-info {
+            flex: 1;
+        }
+
+        .member-name {
+            font-weight: 600;
+            color: #333;
+            font-size: 13px;
+        }
+
+        .member-role {
+            color: #666;
+            font-size: 11px;
+        }
+
+        .member-assignments {
+            background: white;
+            border: 1px solid #e0e0e0;
+            padding: 6px 8px;
+            border-radius: 3px;
+            font-size: 11px;
+            color: #666;
+        }
+
+        .assignment-count {
+            display: inline-block;
+            background: #333;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-weight: 600;
+            margin-left: 5px;
+            font-size: 10px;
+        }
+
+        /* Drag and Drop States */
+        .cards-container.drag-over {
+            background: #f0f0f0;
+            border: 2px dashed #999;
+            border-radius: 4px;
+        }
+
+        /* Scrollbar Styling */
+        .cards-container::-webkit-scrollbar,
+        .sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .cards-container::-webkit-scrollbar-track,
+        .sidebar::-webkit-scrollbar-track {
+            background: #f5f5f5;
+        }
+
+        .cards-container::-webkit-scrollbar-thumb,
+        .sidebar::-webkit-scrollbar-thumb {
+            background: #ccc;
+            border-radius: 3px;
+        }
+
+        .cards-container::-webkit-scrollbar-thumb:hover,
+        .sidebar::-webkit-scrollbar-thumb:hover {
+            background: #999;
+        }
+
+        .card-date {
+            font-size: 10px;
+            color: #999;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>UFO Sighting Area Assignments</h1>
+</div>
+
+<div class="main-container">
+    <!-- Kanban Board -->
+    <div class="kanban-board">
+        <!-- Unassigned Column -->
+        <div class="kanban-column">
+            <div class="column-header unassigned-header">
+                📋 Unassigned (4)
+            </div>
+            <div class="cards-container" id="unassigned">
+                <div class="card" draggable="true">
+                    <div class="card-title">Area 51 - Sector 7G</div>
+                    <div class="card-location">📍 Nevada Desert, USA</div>
+                    <span class="card-priority priority-high">HIGH PRIORITY</span>
+                </div>
+
+                <div class="card" draggable="true">
+                    <div class="card-title">Roswell Incident Site</div>
+                    <div class="card-location">📍 New Mexico, USA</div>
+                    <span class="card-priority priority-medium">MEDIUM PRIORITY</span>
+                </div>
+
+                <div class="card" draggable="true">
+                    <div class="card-title">Phoenix Lights Location</div>
+                    <div class="card-location">📍 Phoenix, Arizona</div>
+                    <span class="card-priority priority-high">HIGH PRIORITY</span>
+                </div>
+
+                <div class="card" draggable="true">
+                    <div class="card-title">Rendlesham Forest</div>
+                    <div class="card-location">📍 Suffolk, England</div>
+                    <span class="card-priority priority-low">LOW PRIORITY</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Assignment Pending Column -->
+        <div class="kanban-column">
+            <div class="column-header pending-header">
+                ⏳ Assignment Pending (3)
+            </div>
+            <div class="cards-container" id="pending">
+                <div class="card" draggable="true">
+                    <div class="card-title">Bonnybridge Triangle</div>
+                    <div class="card-location">📍 Scotland, UK</div>
+                    <span class="card-priority priority-medium">MEDIUM PRIORITY</span>
+                    <div class="card-date">Reported: Nov 27, 2024</div>
+                    <div class="card-assignee">
+                        <span>Assigned to:</span>
+                        <div class="assignee-icon">JD</div>
+                    </div>
+                </div>
+
+                <div class="card" draggable="true">
+                    <div class="card-title">Hessdalen Valley</div>
+                    <div class="card-location">📍 Norway</div>
+                    <span class="card-priority priority-high">HIGH PRIORITY</span>
+                    <div class="card-assignee">
+                        <span>Assigned to:</span>
+                        <div class="assignee-icon">AS</div>
+                    </div>
+                </div>
+
+                <div class="card" draggable="true">
+                    <div class="card-title">Wycliffe Well</div>
+                    <div class="card-location">📍 Northern Territory, Australia</div>
+                    <span class="card-priority priority-low">LOW PRIORITY</span>
+                    <div class="card-assignee">
+                        <span>Assigned to:</span>
+                        <div class="assignee-icon">BJ</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Observation Column -->
+        <div class="kanban-column">
+            <div class="column-header active-header">
+                👁️ Active Observation (2)
+            </div>
+            <div class="cards-container" id="active">
+                <div class="card" draggable="true">
+                    <div class="card-title">Skinwalker Ranch</div>
+                    <div class="card-location">📍 Utah, USA</div>
+                    <span class="card-priority priority-high">HIGH PRIORITY</span>
+                    <div class="card-assignee">
+                        <span>Assigned to:</span>
+                        <div class="assignee-icon">EC</div>
+                    </div>
+                </div>
+
+                <div class="card" draggable="true">
+                    <div class="card-title">Marfa Lights Area</div>
+                    <div class="card-location">📍 Texas, USA</div>
+                    <span class="card-priority priority-medium">MEDIUM PRIORITY</span>
+                    <div class="card-assignee">
+                        <span>Assigned to:</span>
+                        <div class="assignee-icon">MW</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Team Members Sidebar -->
+    <div class="sidebar">
+        <h2>👥 Team Members</h2>
+
+        <div class="team-member-card">
+            <div class="member-header">
+                <div class="member-icon">JD</div>
+                <div class="member-info">
+                    <div class="member-name">John Doe</div>
+                    <div class="member-role">Field Investigator</div>
+                </div>
+            </div>
+            <div class="member-assignments">
+                Active: <span class="assignment-count">1</span>
+            </div>
+        </div>
+
+        <div class="team-member-card">
+            <div class="member-header">
+                <div class="member-icon">AS</div>
+                <div class="member-info">
+                    <div class="member-name">Alice Smith</div>
+                    <div class="member-role">Senior Analyst</div>
+                </div>
+            </div>
+            <div class="member-assignments">
+                Active: <span class="assignment-count">1</span>
+            </div>
+        </div>
+
+        <div class="team-member-card">
+            <div class="member-header">
+                <div class="member-icon">BJ</div>
+                <div class="member-info">
+                    <div class="member-name">Bob Johnson</div>
+                    <div class="member-role">Field Investigator</div>
+                </div>
+            </div>
+            <div class="member-assignments">
+                Active: <span class="assignment-count">1</span>
+            </div>
+        </div>
+
+        <div class="team-member-card">
+            <div class="member-header">
+                <div class="member-icon">EC</div>
+                <div class="member-info">
+                    <div class="member-name">Emma Chen</div>
+                    <div class="member-role">Lead Observer</div>
+                </div>
+            </div>
+            <div class="member-assignments">
+                Active: <span class="assignment-count">1</span>
+            </div>
+        </div>
+
+        <div class="team-member-card">
+            <div class="member-header">
+                <div class="member-icon">MW</div>
+                <div class="member-info">
+                    <div class="member-name">Mike Wilson</div>
+                    <div class="member-role">Observer</div>
+                </div>
+            </div>
+            <div class="member-assignments">
+                Active: <span class="assignment-count">1</span>
+            </div>
+        </div>
+
+        <div class="team-member-card">
+            <div class="member-header">
+                <div class="member-icon">SK</div>
+                <div class="member-info">
+                    <div class="member-name">Sarah Kim</div>
+                    <div class="member-role">Data Specialist</div>
+                </div>
+            </div>
+            <div class="member-assignments">
+                Active: <span class="assignment-count">0</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Drag and Drop Functionality
+    let draggedElement = null;
+
+    // Get all cards
+    const cards = document.querySelectorAll('.card');
+    const containers = document.querySelectorAll('.cards-container');
+
+    // Add drag start event to all cards
+    cards.forEach(card => {
+        card.addEventListener('dragstart', function(e) {
+            draggedElement = this;
+            this.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+        });
+
+        card.addEventListener('dragend', function(e) {
+            this.classList.remove('dragging');
+            draggedElement = null;
+        });
+    });
+
+    // Add events to containers
+    containers.forEach(container => {
+        container.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            this.classList.add('drag-over');
+            e.dataTransfer.dropEffect = 'move';
+        });
+
+        container.addEventListener('dragleave', function(e) {
+            this.classList.remove('drag-over');
+        });
+
+        container.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.classList.remove('drag-over');
+            
+            if (draggedElement) {
+                this.appendChild(draggedElement);
+                updateColumnCounts();
+            }
+        });
+    });
+
+    // Update column counts
+    function updateColumnCounts() {
+        const unassignedCount = document.getElementById('unassigned').children.length;
+        const pendingCount = document.getElementById('pending').children.length;
+        const activeCount = document.getElementById('active').children.length;
+
+        document.querySelector('.unassigned-header').textContent = `📋 Unassigned (${unassignedCount})`;
+        document.querySelector('.pending-header').textContent = `⏳ Assignment Pending (${pendingCount})`;
+        document.querySelector('.active-header').textContent = `👁️ Active Observation (${activeCount})`;
+    }
+
+    // Initialize counts
+    updateColumnCounts();
+</script>
+
+</body>
+</html>
