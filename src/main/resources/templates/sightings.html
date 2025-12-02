@@ -6,6 +6,10 @@
     <title>Sighting Details</title>
     
     <link rel="stylesheet" href="/ufo-app/css/sightings.css" />
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- Leaflet JavaScript -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body>
     <div class="container">
@@ -43,7 +47,9 @@
                 <div class="meta-item">🔺 <span th:text="${currentSighting.shape}">Shape</span></div>
             </div>
 
-            <div class="map-box">Interactive map with pin marking location</div>
+            <div id="map" class="map-box" th:data-lat="${currentSighting.latitude}" th:data-lng="${currentSighting.longitude}" th:data-location="${currentSighting.location}">
+                <div class="map-loading">Loading interactive map...</div>
+            </div>
 
             <h3>Description/Comments</h3>
             <textarea readonly th:text="${currentSighting.description}">Lorem ipsum dolor sit amet, consectetur adipiscing elit...</textarea>
@@ -78,5 +84,128 @@
             <p>There are currently no UFO sightings to display.</p>
         </div>
     </div>
+
+    <script th:if="${currentSighting != null}">
+        let currentMap = null; // Global map variable to prevent multiple initializations
+        
+        function initializeMap() {
+            const mapElement = document.getElementById('map');
+            if (!mapElement) {
+                console.error('Map element not found');
+                return;
+            }
+            
+            // Check if Leaflet is loaded
+            if (typeof L === 'undefined') {
+                console.error('Leaflet library not loaded');
+                mapElement.innerHTML = '<div style="padding: 20px; text-align: center; color: #666;">Map loading... Please refresh if map doesn\'t appear.</div>';
+                return;
+            }
+            
+            // If map already exists, remove it first
+            if (currentMap) {
+                try {
+                    currentMap.remove();
+                } catch(e) {
+                    console.warn('Error removing existing map:', e);
+                }
+                currentMap = null;
+            }
+            
+            const lat = parseFloat(mapElement.dataset.lat);
+            const lng = parseFloat(mapElement.dataset.lng);
+            const location = mapElement.dataset.location;
+            
+            if (isNaN(lat) || isNaN(lng)) {
+                console.error('Invalid coordinates:', lat, lng);
+                mapElement.innerHTML = '<div style="padding: 20px; text-align: center; color: #666;">Invalid location data</div>';
+                return;
+            }
+            
+            try {
+                // Clear loading message
+                const loadingDiv = mapElement.querySelector('.map-loading');
+                if (loadingDiv) {
+                    loadingDiv.style.display = 'none';
+                }
+                
+                // Create new map instance
+                currentMap = L.map('map', {
+                    center: [lat, lng],
+                    zoom: 13,
+                    zoomControl: true,
+                    attributionControl: true
+                });
+                
+                // Add OpenStreetMap tiles
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                    maxZoom: 18
+                }).addTo(currentMap);
+                
+                // Custom UFO icon
+                const ufoIcon = L.divIcon({
+                    html: '🛸',
+                    iconSize: [30, 30],
+                    iconAnchor: [15, 15],
+                    popupAnchor: [0, -15],
+                    className: 'ufo-marker'
+                });
+                
+                // Add marker for the sighting location
+                const marker = L.marker([lat, lng], {icon: ufoIcon}).addTo(currentMap);
+                
+                // Add popup with sighting information
+                marker.bindPopup(`
+                    <div style="text-align: center; font-size: 14px;">
+                        <strong>🛸 UFO Sighting</strong><br/>
+                        <em>${location}</em><br/>
+                        <small>Coordinates: ${lat.toFixed(6)}, ${lng.toFixed(6)}</small>
+                    </div>
+                `).openPopup();
+                
+                console.log('Map initialized successfully for coordinates:', lat, lng);
+                
+                // Force map to resize after initialization
+                setTimeout(function() {
+                    if (currentMap) {
+                        currentMap.invalidateSize();
+                    }
+                }, 100);
+                
+            } catch (error) {
+                console.error('Error initializing map:', error);
+                mapElement.innerHTML = '<div style="padding: 20px; text-align: center; color: #666;">Error loading map. Please refresh the page.</div>';
+                if (currentMap) {
+                    try {
+                        currentMap.remove();
+                    } catch(e) {
+                        // Ignore cleanup errors
+                    }
+                    currentMap = null;
+                }
+            }
+        }
+        
+        // Initialize when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeMap);
+        } else {
+            // DOM is already ready
+            initializeMap();
+        }
+        
+        // Clean up on page unload
+        window.addEventListener('beforeunload', function() {
+            if (currentMap) {
+                try {
+                    currentMap.remove();
+                } catch(e) {
+                    // Ignore cleanup errors
+                }
+                currentMap = null;
+            }
+        });
+    </script>
 </body>
 </html>
