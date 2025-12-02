@@ -223,7 +223,7 @@
             flex: 1;
         }
 
-        .member-name {
+        .member-username {
             font-weight: 600;
             color: #333;
             font-size: 13px;
@@ -287,6 +287,151 @@
             font-size: 10px;
             color: #999;
             margin-top: 4px;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 30px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #333;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-size: 20px;
+            color: #333;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 28px;
+            color: #666;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close-btn:hover {
+            color: #333;
+        }
+
+        .user-info-section {
+            background: #fafafa;
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+
+        .user-info-section h3 {
+            margin: 0 0 10px 0;
+            font-size: 16px;
+            color: #333;
+        }
+
+        .user-info-item {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .assignments-section h3 {
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .assignment-item {
+            background: #fafafa;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 12px;
+        }
+
+        .assignment-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .assignment-area-name {
+            font-weight: 600;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .assignment-status {
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-active {
+            background: #333;
+            color: white;
+        }
+
+        .status-pending {
+            background: #999;
+            color: white;
+        }
+
+        .assignment-detail {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .no-assignments {
+            text-align: center;
+            padding: 20px;
+            color: #999;
+            font-style: italic;
+        }
+
+        .team-member-card {
+            cursor: pointer;
         }
     </style>
 </head>
@@ -403,87 +548,143 @@
     <div class="sidebar">
         <h2>👥 Team Members</h2>
 
-        <div class="team-member-card">
+        <div class="team-member-card" th:each="user : ${users}" 
+             th:onclick="'showUserDetails(' + ${user.userId} + ')'"
+             th:attr="data-user-id=${user.userId},
+                      data-username=${user.username},
+                      data-firstname=${user.firstName},
+                      data-lastname=${user.secondName},
+                      data-role=${user.role},
+                      data-email=${user.email}">
             <div class="member-header">
-                <div class="member-icon">JD</div>
+                <div class="member-icon" th:text="${#strings.substring(user.firstName, 0, 1) + #strings.substring(user.secondName, 0, 1)}">AB</div>
                 <div class="member-info">
-                    <div class="member-name">John Doe</div>
-                    <div class="member-role">Field Investigator</div>
+                    <div class="member-username" th:text="${user.username}">Username</div>
+                    <div class="member-role" th:text="${#strings.capitalize(#strings.toLowerCase(#strings.replace(user.role, '_', ' ')))}">Role</div>
                 </div>
             </div>
             <div class="member-assignments">
-                Active: <span class="assignment-count">1</span>
+                Active: <span class="assignment-count" th:text="${assignmentCounts[user.userId] != null ? assignmentCounts[user.userId] : 0}">0</span>
+            </div>
+            
+            <!-- Hidden data for modal -->
+            <div style="display:none;" th:attr="data-assignments-for=${user.userId}">
+                <div th:each="assignment : ${userAssignments[user.userId]}" class="assignment-data"
+                     th:attr="data-area-name=${assignment.area.areaName},
+                              data-area-desc=${assignment.area.description},
+                              data-area-priority=${assignment.area.areaPriority},
+                              data-status=${assignment.status},
+                              data-assigned-date=${assignment.assignedAt}">
+                </div>
             </div>
         </div>
 
-        <div class="team-member-card">
-            <div class="member-header">
-                <div class="member-icon">AS</div>
-                <div class="member-info">
-                    <div class="member-name">Alice Smith</div>
-                    <div class="member-role">Senior Analyst</div>
-                </div>
-            </div>
-            <div class="member-assignments">
-                Active: <span class="assignment-count">1</span>
-            </div>
+        <div th:if="${users == null or #lists.isEmpty(users)}" style="text-align: center; padding: 20px; color: #999;">
+            No team members found
+        </div>
+    </div>
+</div>
+
+<!-- User Details Modal -->
+<div id="userModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="modalTitle">User Details</h2>
+            <button class="close-btn" onclick="closeModal()">&times;</button>
+        </div>
+        
+        <div class="user-info-section">
+            <h3>Team Member Information</h3>
+            <div class="user-info-item"><strong>Username:</strong> <span id="modalUsername"></span></div>
+            <div class="user-info-item"><strong>Name:</strong> <span id="modalFullName"></span></div>
+            <div class="user-info-item"><strong>Email:</strong> <span id="modalEmail"></span></div>
+            <div class="user-info-item"><strong>Role:</strong> <span id="modalRole"></span></div>
         </div>
 
-        <div class="team-member-card">
-            <div class="member-header">
-                <div class="member-icon">BJ</div>
-                <div class="member-info">
-                    <div class="member-name">Bob Johnson</div>
-                    <div class="member-role">Field Investigator</div>
-                </div>
-            </div>
-            <div class="member-assignments">
-                Active: <span class="assignment-count">1</span>
-            </div>
-        </div>
-
-        <div class="team-member-card">
-            <div class="member-header">
-                <div class="member-icon">EC</div>
-                <div class="member-info">
-                    <div class="member-name">Emma Chen</div>
-                    <div class="member-role">Lead Observer</div>
-                </div>
-            </div>
-            <div class="member-assignments">
-                Active: <span class="assignment-count">1</span>
-            </div>
-        </div>
-
-        <div class="team-member-card">
-            <div class="member-header">
-                <div class="member-icon">MW</div>
-                <div class="member-info">
-                    <div class="member-name">Mike Wilson</div>
-                    <div class="member-role">Observer</div>
-                </div>
-            </div>
-            <div class="member-assignments">
-                Active: <span class="assignment-count">1</span>
-            </div>
-        </div>
-
-        <div class="team-member-card">
-            <div class="member-header">
-                <div class="member-icon">SK</div>
-                <div class="member-info">
-                    <div class="member-name">Sarah Kim</div>
-                    <div class="member-role">Data Specialist</div>
-                </div>
-            </div>
-            <div class="member-assignments">
-                Active: <span class="assignment-count">0</span>
-            </div>
+        <div class="assignments-section">
+            <h3>Area Assignments (<span id="assignmentCount">0</span>)</h3>
+            <div id="assignmentsContainer"></div>
         </div>
     </div>
 </div>
 
 <script>
+    // Modal Functions
+    function showUserDetails(userId) {
+        const card = document.querySelector(`[data-user-id="${userId}"]`);
+        
+        // Populate user info
+        document.getElementById('modalUsername').textContent = card.dataset.username;
+        document.getElementById('modalFullName').textContent = card.dataset.firstname + ' ' + card.dataset.lastname;
+        document.getElementById('modalEmail').textContent = card.dataset.email;
+        document.getElementById('modalRole').textContent = formatRole(card.dataset.role);
+        document.getElementById('modalTitle').textContent = card.dataset.firstname + ' ' + card.dataset.lastname;
+        
+        // Get assignments
+        const assignmentsDiv = card.querySelector(`[data-assignments-for="${userId}"]`);
+        const assignments = assignmentsDiv ? assignmentsDiv.querySelectorAll('.assignment-data') : [];
+        
+        // Populate assignments
+        const container = document.getElementById('assignmentsContainer');
+        container.innerHTML = '';
+        
+        if (assignments.length === 0) {
+            container.innerHTML = '<div class="no-assignments">No active assignments</div>';
+            document.getElementById('assignmentCount').textContent = '0';
+        } else {
+            document.getElementById('assignmentCount').textContent = assignments.length;
+            
+            assignments.forEach(assignment => {
+                const item = document.createElement('div');
+                item.className = 'assignment-item';
+                
+                const statusClass = assignment.dataset.status.toLowerCase() === 'active' ? 'status-active' : 'status-pending';
+                
+                item.innerHTML = `
+                    <div class="assignment-item-header">
+                        <div class="assignment-area-name">${assignment.dataset.areaName}</div>
+                        <div class="assignment-status ${statusClass}">${assignment.dataset.status}</div>
+                    </div>
+                    <div class="assignment-detail"><strong>Description:</strong> ${assignment.dataset.areaDesc}</div>
+                    <div class="assignment-detail"><strong>Priority:</strong> ${formatPriority(assignment.dataset.areaPriority)}</div>
+                    <div class="assignment-detail"><strong>Assigned Date:</strong> ${assignment.dataset.assignedDate}</div>
+                `;
+                
+                container.appendChild(item);
+            });
+        }
+        
+        // Show modal
+        document.getElementById('userModal').classList.add('show');
+    }
+
+    function closeModal() {
+        document.getElementById('userModal').classList.remove('show');
+    }
+
+    function formatRole(role) {
+        return role.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+    }
+
+    function formatPriority(priority) {
+        return priority.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+    }
+
+    // Close modal when clicking outside
+    window.onclick = function(event) {
+        const modal = document.getElementById('userModal');
+        if (event.target === modal) {
+            closeModal();
+        }
+    }
+
+    // Close modal on Escape key
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            closeModal();
+        }
+    });
+
     // Drag and Drop Functionality
     let draggedElement = null;
 

@@ -4,6 +4,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
+import com.hci.ufosightings.service.AreaAssignmentsService;
 import com.hci.ufosightings.service.AreaService;
 import com.hci.ufosightings.service.TeamService;
 import com.hci.ufosightings.service.UserService;
@@ -22,6 +23,8 @@ public class AssignmentsController {
 
     private final TeamService teamService;
 
+    private final AreaAssignmentsService areaAssignmentsService;
+
     // A simple controller to return "Hello, World!" message and lists
     @GetMapping("assignments")
     public String assignments(Model model) {
@@ -29,6 +32,10 @@ public class AssignmentsController {
         model.addAttribute("users", userService.getAllUsers());
         model.addAttribute("areas", areaService.getAllAreas());
         model.addAttribute("teams", teamService.getAllTeams());
+
+        // Assignment data - both counts and full details
+        model.addAttribute("assignmentCounts", areaAssignmentsService.getAssignmentCountsForAllUsers());
+        model.addAttribute("userAssignments", areaAssignmentsService.getAssignmentsGroupedByUser());
 
         return "assignments";
     }
