@@ -128,17 +128,22 @@
             text-transform: uppercase;
         }
 
-        .priority-high {
+        .VERY_HIGH {
+            background: #ff00ae;
+            color: white;
+        }
+
+        .HIGH {
             background: #ff0000;
             color: white;
         }
 
-        .priority-medium {
+        .MEDIUM {
             background: #ffaa00;
             color: white;
         }
 
-        .priority-low {
+        .LOW{
             background: #00ff0d;
             color: white;
         }
@@ -146,12 +151,13 @@
         .card-assignee {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 5px;
             margin-top: 8px;
             padding-top: 8px;
             border-top: 1px solid #e0e0e0;
             font-size: 11px;
             color: #000000;
+            flex-wrap: wrap;
         }
 
         .assignee-icon {
@@ -159,12 +165,13 @@
             height: 24px;
             border-radius: 50%;
             background: #666;
-            display: flex;
+            display: inline-flex;
             align-items: center;
             justify-content: center;
             color: white;
             font-weight: bold;
             font-size: 10px;
+            margin-left: 3px;
         }
 
         /* Right Sidebar */
@@ -446,100 +453,70 @@
     <div class="kanban-board">
         <!-- Unassigned Column -->
         <div class="kanban-column">
-            <div class="column-header unassigned-header">
-                📋 Unassigned (4)
+            <div class="column-header unassigned-header" th:text="'📋 Unassigned (' + ${#lists.size(unassignedAreas)} + ')'">
+                📋 Unassigned (0)
             </div>
             <div class="cards-container" id="unassigned">
-                <div class="card" draggable="true">
-                    <div class="card-title">Area 51 - Sector 7G</div>
-                    <div class="card-location">📍 Nevada Desert, USA</div>
-                    <span class="card-priority priority-high">HIGH PRIORITY</span>
+                <div class="card" draggable="true" th:each="area : ${unassignedAreas}">
+                    <div class="card-title" th:text="${area.areaName}">Area Name</div>
+                    <div class="card-location" th:text="'📍 ' + ${area.description}">📍 Description</div>
+                    <span class="card-priority" 
+                        th:class="${'card-priority ' + (#strings.toString(area.areaPriority))}"
+                        th:text="${#strings.replace(area.areaPriority, '_', ' ')}">
+                        PRIORITY
+                    </span>
                 </div>
 
-                <div class="card" draggable="true">
-                    <div class="card-title">Roswell Incident Site</div>
-                    <div class="card-location">📍 New Mexico, USA</div>
-                    <span class="card-priority priority-medium">MEDIUM PRIORITY</span>
-                </div>
-
-                <div class="card" draggable="true">
-                    <div class="card-title">Phoenix Lights Location</div>
-                    <div class="card-location">📍 Phoenix, Arizona</div>
-                    <span class="card-priority priority-high">HIGH PRIORITY</span>
-                </div>
-
-                <div class="card" draggable="true">
-                    <div class="card-title">Rendlesham Forest</div>
-                    <div class="card-location">📍 Suffolk, England</div>
-                    <span class="card-priority priority-low">LOW PRIORITY</span>
-                </div>
             </div>
         </div>
 
         <!-- Assignment Pending Column -->
         <div class="kanban-column">
-            <div class="column-header pending-header">
-                ⏳ Assignment Pending (3)
+            <div class="column-header pending-header" th:text="'⏳ Assignment Pending (' + ${#maps.size(pendingByArea)} + ')'">
+                ⏳ Assignment Pending (0)
             </div>
             <div class="cards-container" id="pending">
-                <div class="card" draggable="true">
-                    <div class="card-title">Bonnybridge Triangle</div>
-                    <div class="card-location">📍 Scotland, UK</div>
-                    <span class="card-priority priority-medium">MEDIUM PRIORITY</span>
-                    <div class="card-date">Reported: Nov 27, 2024</div>
+                <div class="card" draggable="true" th:each="entry : ${pendingByArea}">
+                    <div class="card-title" th:text="${entry.value[0].area.areaName}">Area Name</div>
+                    <div class="card-location" th:text="'📍 ' + ${entry.value[0].area.description}">📍 Description</div>
+                    <span class="card-priority" 
+                          th:class="${'card-priority ' + (#strings.toString(entry.value[0].area.areaPriority))}"
+                          th:text="${#strings.replace(entry.value[0].area.areaPriority, '_', ' ')}">
+                        PRIORITY
+                    </span>
                     <div class="card-assignee">
                         <span>Assigned to:</span>
-                        <div class="assignee-icon">JD</div>
+                        <span th:each="assignment, iterStat : ${entry.value}">
+                            <div class="assignee-icon" th:text="${#strings.substring(assignment.user.firstName, 0, 1) + #strings.substring(assignment.user.secondName, 0, 1)}">XX</div>
+                        </span>
                     </div>
                 </div>
 
-                <div class="card" draggable="true">
-                    <div class="card-title">Hessdalen Valley</div>
-                    <div class="card-location">📍 Norway</div>
-                    <span class="card-priority priority-high">HIGH PRIORITY</span>
-                    <div class="card-assignee">
-                        <span>Assigned to:</span>
-                        <div class="assignee-icon">AS</div>
-                    </div>
-                </div>
-
-                <div class="card" draggable="true">
-                    <div class="card-title">Wycliffe Well</div>
-                    <div class="card-location">📍 Northern Territory, Australia</div>
-                    <span class="card-priority priority-low">LOW PRIORITY</span>
-                    <div class="card-assignee">
-                        <span>Assigned to:</span>
-                        <div class="assignee-icon">BJ</div>
-                    </div>
-                </div>
             </div>
         </div>
 
         <!-- Active Observation Column -->
         <div class="kanban-column">
-            <div class="column-header active-header">
-                👁️ Active Observation (2)
+            <div class="column-header active-header" th:text="'👁️ Active Observation (' + ${#maps.size(activeByArea)} + ')'">
+                👁️ Active Observation (0)
             </div>
             <div class="cards-container" id="active">
-                <div class="card" draggable="true">
-                    <div class="card-title">Skinwalker Ranch</div>
-                    <div class="card-location">📍 Utah, USA</div>
-                    <span class="card-priority priority-high">HIGH PRIORITY</span>
+                <div class="card" draggable="true" th:each="entry : ${activeByArea}">
+                    <div class="card-title" th:text="${entry.value[0].area.areaName}">Area Name</div>
+                    <div class="card-location" th:text="'📍 ' + ${entry.value[0].area.description}">📍 Description</div>
+                    <span class="card-priority" 
+                        th:class="${'card-priority ' + (#strings.toString(entry.value[0].area.areaPriority))}"
+                        th:text="${#strings.replace(entry.value[0].area.areaPriority, '_', ' ')}">
+                        PRIORITY
+                    </span>
                     <div class="card-assignee">
                         <span>Assigned to:</span>
-                        <div class="assignee-icon">EC</div>
+                        <span th:each="assignment, iterStat : ${entry.value}">
+                            <div class="assignee-icon" th:text="${#strings.substring(assignment.user.firstName, 0, 1) + #strings.substring(assignment.user.secondName, 0, 1)}">XX</div>
+                        </span>
                     </div>
                 </div>
 
-                <div class="card" draggable="true">
-                    <div class="card-title">Marfa Lights Area</div>
-                    <div class="card-location">📍 Texas, USA</div>
-                    <span class="card-priority priority-medium">MEDIUM PRIORITY</span>
-                    <div class="card-assignee">
-                        <span>Assigned to:</span>
-                        <div class="assignee-icon">MW</div>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
@@ -746,3 +723,4 @@
 
 </body>
 </html>
+

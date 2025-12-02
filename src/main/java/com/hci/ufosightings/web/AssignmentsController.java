@@ -25,7 +25,6 @@ public class AssignmentsController {
 
     private final AreaAssignmentsService areaAssignmentsService;
 
-    // A simple controller to return "Hello, World!" message and lists
     @GetMapping("assignments")
     public String assignments(Model model) {
         // call services and add lists to the model
@@ -36,6 +35,11 @@ public class AssignmentsController {
         // Assignment data - both counts and full details
         model.addAttribute("assignmentCounts", areaAssignmentsService.getAssignmentCountsForAllUsers());
         model.addAttribute("userAssignments", areaAssignmentsService.getAssignmentsGroupedByUser());
+
+        // Kanban board data - grouped by area (one card per area, showing all users)
+        model.addAttribute("unassignedAreas", areaService.getUnassignedAreas());
+        model.addAttribute("pendingByArea", areaAssignmentsService.getAssignmentsGroupedByArea(com.hci.ufosightings.common.AssignmentStatus.PENDING));
+        model.addAttribute("activeByArea", areaAssignmentsService.getAssignmentsGroupedByArea(com.hci.ufosightings.common.AssignmentStatus.ACTIVE));
 
         return "assignments";
     }

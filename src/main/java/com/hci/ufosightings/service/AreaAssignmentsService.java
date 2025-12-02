@@ -60,4 +60,27 @@ public class AreaAssignmentsService {
 
         return groupedAssignments;
     }
+
+    /**
+     * Get assignments by status (for Kanban board columns)
+     */
+    public List<AreaAssignments> getAssignmentsByStatus(com.hci.ufosightings.common.AssignmentStatus status) {
+        return areaAssignmentsDao.findByStatus(status);
+    }
+
+    /**
+     * Get assignments grouped by area ID for a specific status This ensures one
+     * card per area, with all assigned users shown
+     */
+    public Map<Long, List<AreaAssignments>> getAssignmentsGroupedByArea(com.hci.ufosightings.common.AssignmentStatus status) {
+        List<AreaAssignments> assignments = areaAssignmentsDao.findByStatus(status);
+        Map<Long, List<AreaAssignments>> groupedByArea = new HashMap<>();
+
+        for (AreaAssignments assignment : assignments) {
+            Long areaId = assignment.getId().getAreaId();
+            groupedByArea.computeIfAbsent(areaId, k -> new ArrayList<>()).add(assignment);
+        }
+
+        return groupedByArea;
+    }
 }
