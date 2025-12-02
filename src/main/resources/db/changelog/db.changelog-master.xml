@@ -109,4 +109,47 @@
                                  referencedColumnNames="team_id" onDelete="SET NULL"/>
     </changeSet>
 
+    <!-- Create sightings table -->
+    <changeSet id="create-sightings-table" author="rdev (generated)">
+        <createTable tableName="sightings">
+            <column name="sighting_id" type="INT">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="title" type="VARCHAR(255)"/>
+            <column name="reporter_user_id" type="INT"/>
+            <column name="sighting_date" type="DATE"/>
+            <column name="duration_minutes" type="INT"/>
+            <column name="location" type="VARCHAR(500)"/>
+            <column name="latitude" type="DECIMAL(10,7)"/>
+            <column name="longitude" type="DECIMAL(10,7)"/>
+            <column name="shape" type="VARCHAR(100)"/>
+            <column name="description" type="TEXT"/>
+            <column name="legit_votes" type="INT" defaultValue="0"/>
+            <column name="uncertain_votes" type="INT" defaultValue="0"/>
+            <column name="hoax_votes" type="INT" defaultValue="0"/>
+        </createTable>
+
+        <!-- foreign key to users.user_id for reporter -->
+        <addForeignKeyConstraint baseTableName="sightings" baseColumnNames="reporter_user_id"
+                                 constraintName="fk_sightings_reporter"
+                                 referencedTableName="users" referencedColumnNames="user_id"
+                                 onDelete="SET NULL"/>
+
+        <loadData file="data/sightings.csv" relativeToChangelogFile="true" tableName="sightings">
+            <column header="sighting_id" name="sighting_id" type="NUMERIC"/>
+            <column header="title" name="title" type="STRING"/>
+            <column header="reporter_user_id" name="reporter_user_id" type="NUMERIC"/>
+            <column header="sighting_date" name="sighting_date" type="DATE"/>
+            <column header="duration_minutes" name="duration_minutes" type="NUMERIC"/>
+            <column header="location" name="location" type="STRING"/>
+            <column header="latitude" name="latitude" type="NUMERIC"/>
+            <column header="longitude" name="longitude" type="NUMERIC"/>
+            <column header="shape" name="shape" type="STRING"/>
+            <column header="description" name="description" type="STRING"/>
+            <column header="legit_votes" name="legit_votes" type="NUMERIC"/>
+            <column header="uncertain_votes" name="uncertain_votes" type="NUMERIC"/>
+            <column header="hoax_votes" name="hoax_votes" type="NUMERIC"/>
+        </loadData>
+    </changeSet>
+
 </databaseChangeLog>

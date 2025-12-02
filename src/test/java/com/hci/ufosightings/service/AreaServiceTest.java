@@ -49,7 +49,7 @@ class AreaServiceTest {
 
         assertNotNull(actual);
         assertEquals(1, actual.size());
-        assertEquals(user, actual.getFirst());
+        assertEquals(user, actual.get(0));
         verify(areaDao, times(1)).findById(5L);
     }
 
