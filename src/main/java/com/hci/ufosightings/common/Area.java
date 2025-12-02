@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Getter
 @Setter
@@ -30,7 +31,11 @@ public class Area {
     @Enumerated(EnumType.STRING)
     private AreaPriority areaPriority;
 
-    @ManyToMany
-    @JoinTable(name = "area_assignments")
-    private List<User> assignedUsers;
+    @OneToMany(mappedBy = "area")
+    private List<AreaAssignments> assignments;
+
+    public List<User> getAssignedUsers() {
+        if (assignments == null) return List.of();
+        return assignments.stream().map(AreaAssignments::getUser).collect(Collectors.toList());
+    }
 }
