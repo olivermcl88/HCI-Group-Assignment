@@ -215,4 +215,13 @@
         <addAutoIncrement tableName="comments" columnName="comment_id" columnDataType="INT"/>
     </changeSet>
 
+    <!-- Ensure identity/auto-increment starts after existing data to avoid PK collisions (H2 specific)
+         This sets the next value to 1000 so inserts won't conflict with loaded CSV IDs. -->
+    <changeSet id="restart-comment-id-identity" author="rdev (generated)">
+        <preConditions onFail="MARK_RAN">
+            <dbms type="h2"/>
+        </preConditions>
+        <sql>ALTER TABLE comments ALTER COLUMN comment_id RESTART WITH 1000;</sql>
+    </changeSet>
+
 </databaseChangeLog>
