@@ -1,0 +1,6 @@
+comment_id,sighting_id,commenter_user_id,comment_text,comment_date,is_anonymous
+1,1,2,"Great sighting! I saw something similar in that area last month.",2025-01-02T10:30:00,false
+2,1,3,"Very detailed description. Thanks for sharing!",2025-01-02T14:15:00,false
+3,2,1,"Edinburgh has been getting a lot of activity lately.",2025-01-03T09:45:00,false
+4,3,4,"Loch Ness always has interesting phenomena. Could be related to the local geology.",2025-01-04T16:20:00,false
+5,1,4,"I'm skeptical about the triangular shape. Need more evidence.",2025-01-04T18:30:00,false

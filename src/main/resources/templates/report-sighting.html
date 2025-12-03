@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Report a New Sighting</title>
+    <link rel="stylesheet" href="/ufo-app/css/styles.css" />
+    <link rel="stylesheet" href="/ufo-app/css/sightings.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+</head>
+<body>
+    <div class="container">
+        <div class="page-header">
+            <h1>Report a New Sighting</h1>
+            <a th:href="@{/sightings}" class="btn">Back to Sightings</a>
+        </div>
+
+        <form th:action="@{/sightings/new}" method="post" enctype="multipart/form-data" class="report-form">
+            <div class="form-row">
+                <label for="title">Title</label>
+                <input type="text" id="title" name="title" required />
+            </div>
+
+            <div class="form-row">
+                <label for="sightingDate">Date</label>
+                <input type="date" id="sightingDate" name="sightingDate" required />
+            </div>
+
+            <div class="form-row">
+                <label for="durationMinutes">Duration (minutes)</label>
+                <input type="number" id="durationMinutes" name="durationMinutes" min="0" step="1" />
+            </div>
+
+            <div class="form-row">
+                <label for="location">Location</label>
+                <input type="text" id="location" name="location" required />
+            </div>
+
+            <!-- Map picker: clicking or dragging the marker will populate latitude/longitude and optionally reverse-geocode the location -->
+            <div class="form-row">
+                <label>Pick location on map</label>
+                <div id="picker-map" class="map-box"></div>
+                <div style="margin-top:8px;">
+                    <button type="button" id="use-location" class="btn">Use my location</button>
+                    <small style="color:#666; margin-left:8px;">Or drag the marker / click the map to set coordinates</small>
+                </div>
+            </div>
+
+            <div class="form-row coordinates-row">
+                <div>
+                    <label for="latitude">Latitude</label>
+                    <input type="number" id="latitude" name="latitude" step="any" />
+                </div>
+                <div>
+                    <label for="longitude">Longitude</label>
+                    <input type="number" id="longitude" name="longitude" step="any" />
+                </div>
+            </div>
+
+            <div class="form-row">
+                <label for="shape">Shape</label>
+                <select id="shape" name="shape">
+                    <option value="">-- Select shape --</option>
+                    <option>Light</option>
+                    <option>Disk</option>
+                    <option>Triangle</option>
+                    <option>Sphere</option>
+                    <option>Unknown</option>
+                    <option>Other</option>
+                </select>
+            </div>
+
+            <div class="form-row">
+                <label for="description">Description</label>
+                <textarea id="description" name="description" rows="6" required></textarea>
+            </div>
+
+            <div class="form-row">
+                <label for="evidence">Evidence (optional)</label>
+                <input type="file" id="evidence" name="evidence" accept="image/*,video/*" class="btn"/>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn">Submit Sighting</button>
+                <a th:href="@{/sightings}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="/ufo-app/js/report-sighting-map.js"></script>
+</body>
+</html>

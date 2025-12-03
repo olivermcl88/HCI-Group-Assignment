@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="">
+<head>
+    <meta charset="UTF-8">
+    <title>UFO Sightings</title>
+    <style>
+        .placeholder-navbar {
+            display: flex;
+            gap: 1rem;
+            padding: 0.5rem 1rem;
+            background: #2d2d2d;
+            color: #fff;
+            align-items: center;
+        }
+        .placeholder-navbar a {
+            color: #fff;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .placeholder-navbar a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Navbar Fragment -->
+<nav th:fragment="navbar">
+
+    <div class="placeholder-navbar">
+        <div class="brand">UFO Sightings</div>
+        <div class="spacer" style="flex:1"></div>
+        <a th:href="@{/}">Home</a>
+        <a th:href="@{/hello-world}">Hello</a>
+        <!-- Example dashboard link with userId placeholder-->
+        <a th:href="@{/reporter-dashboard/1}">Dashboard</a>
+    </div>
+</nav>
+</body>
+</html>
