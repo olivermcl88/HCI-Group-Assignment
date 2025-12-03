@@ -15,6 +15,8 @@ public interface AreaAssignmentsDao extends JpaRepository<AreaAssignments, AreaA
 
     List<AreaAssignments> findById_UserId(Long userId);
 
+    List<AreaAssignments> findByUser_UserId(Long userId);
+
     List<AreaAssignments> findByStatus(AssignmentStatus status);
 
     @Query("SELECT COUNT(a) FROM AreaAssignments a WHERE a.id.userId = :userId")
