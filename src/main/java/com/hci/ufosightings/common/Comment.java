@@ -35,4 +35,10 @@ public class Comment {
     
     @Column(name = "is_anonymous")
     private Boolean isAnonymous;
+    
+    @Column(name = "attachment_filename")
+    private String attachmentFilename;
+    
+    @Column(name = "attachment_original_name")
+    private String attachmentOriginalName;
 }

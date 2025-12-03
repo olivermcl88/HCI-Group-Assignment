@@ -190,6 +190,58 @@ body {
     transform: translateY(-1px);
 }
 
+.comment-file-upload {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.file-upload-btn {
+    background: #28a745 !important;
+    color: white !important;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    text-decoration: none;
+    transition: background-color 0.3s ease;
+}
+
+.file-upload-btn:hover {
+    background: #218838 !important;
+    text-decoration: none;
+    color: white !important;
+}
+
+.selected-file-name {
+    font-size: 12px;
+    color: #666;
+    font-style: italic;
+    display: none;
+}
+
+.comment-attachment {
+    margin-top: 8px;
+    padding: 8px 12px;
+    background: #f8f9fa;
+    border-radius: 4px;
+    border-left: 3px solid #007bff;
+}
+
+.attachment-link {
+    color: #007bff;
+    text-decoration: none;
+    font-size: 14px;
+    display: inline-block;
+}
+
+.attachment-link:hover {
+    text-decoration: underline;
+    color: #0056b3;
+}
+
 .evidence-upload-form {
     display: inline-block;
 }

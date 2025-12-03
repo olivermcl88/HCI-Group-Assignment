@@ -104,10 +104,47 @@ public class SightingsController {
     public String addComment(@PathVariable Long id, 
                            @RequestParam String commentText,
                            @RequestParam(defaultValue = "1") Long userId,
-                           @RequestParam(required = false) Boolean isAnonymous) {
+                           @RequestParam(required = false) Boolean isAnonymous,
+                           @RequestParam(value = "attachment", required = false) MultipartFile attachmentFile) {
+        
+        String attachmentFilename = null;
+        String attachmentOriginalName = null;
+        
+        // Handle file upload if present
+        if (attachmentFile != null && !attachmentFile.isEmpty()) {
+            try {
+                // Create uploads directory if it doesn't exist
+                Path uploadPath = Paths.get("uploads/comments");
+                if (!Files.exists(uploadPath)) {
+                    Files.createDirectories(uploadPath);
+                }
+                
+                // Generate unique filename
+                String originalFilename = attachmentFile.getOriginalFilename();
+                String cleanOriginalName = originalFilename != null ? originalFilename.replaceAll("[^a-zA-Z0-9.-]", "_") : "file";
+                String fileExtension = "";
+                if (originalFilename != null && originalFilename.contains(".")) {
+                    fileExtension = originalFilename.substring(originalFilename.lastIndexOf("."));
+                }
+                attachmentFilename = "comment_" + id + "_" + UUID.randomUUID().toString() + "_" + cleanOriginalName;
+                attachmentOriginalName = originalFilename;
+                
+                // Save file
+                Path filePath = uploadPath.resolve(attachmentFilename);
+                Files.copy(attachmentFile.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+                
+                log.info("Comment attachment uploaded: {} for sighting {}", attachmentFilename, id);
+                
+            } catch (IOException e) {
+                log.error("Failed to upload comment attachment", e);
+                // Continue without attachment
+                attachmentFilename = null;
+                attachmentOriginalName = null;
+            }
+        }
         
         if (commentText != null && !commentText.trim().isEmpty()) {
-            commentService.addComment(id, userId, commentText.trim(), isAnonymous);
+            commentService.addComment(id, userId, commentText.trim(), isAnonymous, attachmentFilename, attachmentOriginalName);
         }
         
         return "redirect:/sightings/" + id;
@@ -249,6 +286,23 @@ public class SightingsController {
             log.error("Failed to cleanup evidence comments", e);
         }
         return "redirect:/sightings";
+    }
+
+    @GetMapping("comment-attachment/{filename}")
+    public ResponseEntity<Resource> downloadCommentAttachment(@PathVariable String filename) {
+        try {
+            Path filePath = Paths.get("uploads/comments").resolve(filename);
+            Resource resource = new UrlResource(filePath.toUri());
+            
+            if (resource.exists() && resource.isReadable()) {
+                return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + resource.getFilename() + "\"")
+                    .body(resource);
+            }
+        } catch (Exception e) {
+            log.error("Failed to download comment attachment: " + filename, e);
+        }
+        return ResponseEntity.notFound().build();
     }
 
     @GetMapping("evidence/{filename}")

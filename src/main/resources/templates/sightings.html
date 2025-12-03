@@ -95,10 +95,15 @@
 
             <h2>Comments</h2>
             
-            <form th:action="@{/sightings/{id}/comment(id=${currentSighting.sightingId})}" method="post" class="comment-form">
+            <form th:action="@{/sightings/{id}/comment(id=${currentSighting.sightingId})}" method="post" class="comment-form" enctype="multipart/form-data">
                 <div class="comment-input-section">
                     <textarea name="commentText" placeholder="Share your thoughts about this sighting..." required></textarea>
                     <div class="comment-options">
+                        <div class="comment-file-upload">
+                            <input type="file" name="attachment" id="commentAttachment" accept="image/*,video/*,.pdf,.doc,.docx,.txt" style="display: none;" />
+                            <label for="commentAttachment" class="btn file-upload-btn">📎 Attach File</label>
+                            <span id="selectedFileName" class="selected-file-name"></span>
+                        </div>
                         <label>
                             <input type="checkbox" name="isAnonymous" value="true" />
                             Post anonymously
@@ -124,6 +129,13 @@
                             <div class="comment-date" th:text="${#temporals.format(comment.commentDate, 'dd/MM/yyyy HH:mm')}">Date</div>
                         </div>
                         <div class="comment-text" th:text="${comment.commentText}">Comment text</div>
+                        <div th:if="${comment.attachmentFilename != null}" class="comment-attachment">
+                            <a th:href="@{/comment-attachment/{filename}(filename=${comment.attachmentFilename})}" 
+                               th:text="'📎 ' + ${comment.attachmentOriginalName != null ? comment.attachmentOriginalName : 'Attachment'}" 
+                               class="attachment-link" target="_blank">
+                                📎 Attachment
+                            </a>
+                        </div>
                     </div>
                 </div>
                 <div th:if="${comments == null or comments.isEmpty()}" class="no-comments">
@@ -159,6 +171,23 @@
                             // Clear the file input
                             this.value = '';
                         }
+                    }
+                });
+            }
+            
+            // Handle comment attachment file selection
+            const commentFileInput = document.getElementById('commentAttachment');
+            const selectedFileName = document.getElementById('selectedFileName');
+            
+            if (commentFileInput && selectedFileName) {
+                commentFileInput.addEventListener('change', function() {
+                    if (this.files && this.files.length > 0) {
+                        const fileName = this.files[0].name;
+                        selectedFileName.textContent = fileName;
+                        selectedFileName.style.display = 'inline';
+                    } else {
+                        selectedFileName.textContent = '';
+                        selectedFileName.style.display = 'none';
                     }
                 });
             }

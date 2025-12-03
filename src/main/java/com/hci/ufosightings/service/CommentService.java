@@ -35,7 +35,9 @@ public class CommentService {
                 .sightingId(comment.getSightingId())
                 .commentText(comment.getCommentText())
                 .commentDate(comment.getCommentDate())
-                .isAnonymous(comment.getIsAnonymous());
+                .isAnonymous(comment.getIsAnonymous())
+                .attachmentFilename(comment.getAttachmentFilename())
+                .attachmentOriginalName(comment.getAttachmentOriginalName());
         
         if (!comment.getIsAnonymous() && comment.getCommenterUserId() != null) {
             User user = userService.getUserById(comment.getCommenterUserId());
@@ -49,12 +51,19 @@ public class CommentService {
     }
     
     public Comment addComment(Long sightingId, Long commenterUserId, String commentText, Boolean isAnonymous) {
+        return addComment(sightingId, commenterUserId, commentText, isAnonymous, null, null);
+    }
+    
+    public Comment addComment(Long sightingId, Long commenterUserId, String commentText, Boolean isAnonymous,
+                            String attachmentFilename, String attachmentOriginalName) {
         Comment comment = Comment.builder()
                 .sightingId(sightingId)
                 .commenterUserId(commenterUserId)
                 .commentText(commentText)
                 .commentDate(LocalDateTime.now())
                 .isAnonymous(isAnonymous != null ? isAnonymous : false)
+                .attachmentFilename(attachmentFilename)
+                .attachmentOriginalName(attachmentOriginalName)
                 .build();
         
         Comment savedComment = commentDao.save(comment);
