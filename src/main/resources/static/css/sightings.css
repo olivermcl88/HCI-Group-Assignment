@@ -383,6 +383,24 @@ textarea {
     cursor: pointer;
     color: white;
     font-weight: bold;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.vote-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.vote-btn.current-vote {
+    border: 3px solid #fff;
+    box-shadow: 0 0 0 2px #007bff, 0 4px 8px rgba(0,123,255,0.3);
+    transform: scale(1.05);
+}
+
+.vote-btn.current-vote::before {
+    content: "✓ ";
+    font-weight: bold;
 }
 
 .vote-legit {

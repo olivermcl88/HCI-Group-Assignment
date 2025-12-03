@@ -236,4 +236,7 @@
         <sql>ALTER TABLE sightings ALTER COLUMN sighting_id RESTART WITH 1000;</sql>
     </changeSet>
 
+    <!-- Include votes changelog -->
+    <include file="votes-changelog.xml" relativeToChangelogFile="true"/>
+
 </databaseChangeLog>

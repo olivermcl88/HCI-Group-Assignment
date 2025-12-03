@@ -65,21 +65,32 @@
 
             <h2>Community Validation</h2>
             <div>
-                Legitimate: <span th:text="${currentSighting.legitPercentage}">35</span>% &nbsp;&nbsp; 
-                Uncertain: <span th:text="${currentSighting.uncertainPercentage}">55</span>% &nbsp;&nbsp; 
-                Hoax: <span th:text="${currentSighting.hoaxPercentage}">10</span>%
+                Legitimate: <span th:text="${legitPercentage}">35</span>% (<span th:text="${legitVotes}">5</span> votes) &nbsp;&nbsp; 
+                Uncertain: <span th:text="${uncertainPercentage}">55</span>% (<span th:text="${uncertainVotes}">8</span> votes) &nbsp;&nbsp; 
+                Hoax: <span th:text="${hoaxPercentage}">10</span>% (<span th:text="${hoaxVotes}">2</span> votes)
+            </div>
+            <div th:if="${totalVotes > 0}" style="margin-top: 5px; color: #666; font-size: 14px;">
+                Total votes: <span th:text="${totalVotes}">15</span>
+            </div>
+            <div th:if="${userVote != null}" style="margin-top: 10px; padding: 10px; background: #e3f2fd; border-radius: 4px; font-weight: bold;">
+                Your vote: <span th:text="${userVote.voteType}">LEGIT</span> 
+                <span style="font-weight: normal; color: #666;">(click a button below to change your vote)</span>
             </div>
 
             <div class="validation-bar">
-                <div class="legit" th:style="'width: ' + ${currentSighting.legitPercentage} + '%'"></div>
-                <div class="uncertain" th:style="'width: ' + ${currentSighting.uncertainPercentage} + '%'"></div>
-                <div class="hoax" th:style="'width: ' + ${currentSighting.hoaxPercentage} + '%'"></div>
+                <div class="legit" th:style="'width: ' + ${legitPercentage} + '%'"></div>
+                <div class="uncertain" th:style="'width: ' + ${uncertainPercentage} + '%'"></div>
+                <div class="hoax" th:style="'width: ' + ${hoaxPercentage} + '%'"></div>
             </div>
 
             <form th:action="@{/sightings/{id}/vote(id=${currentSighting.sightingId})}" method="post" class="validation-buttons">
-                <button type="submit" name="voteType" value="legit" class="vote-btn vote-legit">Legitimate</button>
-                <button type="submit" name="voteType" value="uncertain" class="vote-btn vote-uncertain">Uncertain</button>
-                <button type="submit" name="voteType" value="hoax" class="vote-btn vote-hoax">Hoax</button>
+                <input type="hidden" name="userId" th:value="${currentUserId}" />
+                <button type="submit" name="voteType" value="legit" 
+                        th:class="'vote-btn vote-legit' + ${userVote != null && userVote.voteType.name() == 'LEGIT' ? ' current-vote' : ''}">Legitimate</button>
+                <button type="submit" name="voteType" value="uncertain" 
+                        th:class="'vote-btn vote-uncertain' + ${userVote != null && userVote.voteType.name() == 'UNCERTAIN' ? ' current-vote' : ''}">Uncertain</button>
+                <button type="submit" name="voteType" value="hoax" 
+                        th:class="'vote-btn vote-hoax' + ${userVote != null && userVote.voteType.name() == 'HOAX' ? ' current-vote' : ''}">Hoax</button>
             </form>
 
             <h2>Comments</h2>
