@@ -34,7 +34,6 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
 import java.util.ArrayList;
-import java.util.stream.Collectors;
 
 @Controller
 @RequiredArgsConstructor
@@ -105,7 +104,8 @@ public class SightingsController {
                            @RequestParam String commentText,
                            @RequestParam(defaultValue = "1") Long userId,
                            @RequestParam(required = false) Boolean isAnonymous,
-                           @RequestParam(value = "attachment", required = false) MultipartFile attachmentFile) {
+                           @RequestParam(value = "attachment", required = false) MultipartFile attachmentFile,
+                           @RequestParam(required = false) Long parentCommentId) {
         
         String attachmentFilename = null;
         String attachmentOriginalName = null;
@@ -122,10 +122,6 @@ public class SightingsController {
                 // Generate unique filename
                 String originalFilename = attachmentFile.getOriginalFilename();
                 String cleanOriginalName = originalFilename != null ? originalFilename.replaceAll("[^a-zA-Z0-9.-]", "_") : "file";
-                String fileExtension = "";
-                if (originalFilename != null && originalFilename.contains(".")) {
-                    fileExtension = originalFilename.substring(originalFilename.lastIndexOf("."));
-                }
                 attachmentFilename = "comment_" + id + "_" + UUID.randomUUID().toString() + "_" + cleanOriginalName;
                 attachmentOriginalName = originalFilename;
                 
@@ -144,7 +140,7 @@ public class SightingsController {
         }
         
         if (commentText != null && !commentText.trim().isEmpty()) {
-            commentService.addComment(id, userId, commentText.trim(), isAnonymous, attachmentFilename, attachmentOriginalName);
+            commentService.addComment(id, userId, commentText.trim(), isAnonymous, attachmentFilename, attachmentOriginalName, parentCommentId);
         }
         
         return "redirect:/sightings/" + id;
@@ -203,10 +199,6 @@ public class SightingsController {
                 // Generate unique filename that preserves original name
                 String originalFilename = file.getOriginalFilename();
                 String cleanOriginalName = originalFilename != null ? originalFilename.replaceAll("[^a-zA-Z0-9.-]", "_") : "file";
-                String fileExtension = "";
-                if (originalFilename != null && originalFilename.contains(".")) {
-                    fileExtension = originalFilename.substring(originalFilename.lastIndexOf("."));
-                }
                 String filename = "evidence_" + id + "_" + UUID.randomUUID().toString() + "_" + cleanOriginalName;
 
                 // Save file

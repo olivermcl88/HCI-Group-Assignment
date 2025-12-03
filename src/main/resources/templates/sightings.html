@@ -51,7 +51,7 @@
                 <div class="map-loading">Loading interactive map...</div>
             </div>
 
-            <h3>Description/Comments</h3>
+            <h3>Description</h3>
             <textarea readonly th:text="${currentSighting.description}">Lorem ipsum dolor sit amet, consectetur adipiscing elit...</textarea>
 
             <div class="evidence-buttons">
@@ -116,25 +116,119 @@
 
             <div class="comments-list">
                 <div th:if="${comments != null and !comments.isEmpty()}">
-                    <div th:each="comment : ${comments}" class="comment-item">
-                        <div class="comment-header">
-                            <div class="comment-author">
-                                <span th:if="${!comment.isAnonymous and comment.commenterUsername != null}">
-                                    <strong th:text="${comment.commenterUsername}">Username</strong>
-                                </span>
-                                <span th:if="${comment.isAnonymous or comment.commenterUsername == null}">
-                                    <strong>Anonymous</strong>
-                                </span>
+                    <!-- Group comments by thread -->
+                    <div th:each="comment : ${comments}" th:if="${comment.parentCommentId == null}" class="comment-thread">
+                        <!-- Main comment -->
+                        <div class="comment-item" th:classappend="'level-' + ${comment.replyLevel}">
+                            <div class="comment-header">
+                                <div class="comment-author">
+                                    <span th:if="${!comment.isAnonymous and comment.commenterUsername != null}">
+                                        <strong th:text="${comment.commenterUsername}">Username</strong>
+                                    </span>
+                                    <span th:if="${comment.isAnonymous or comment.commenterUsername == null}">
+                                        <strong>Anonymous</strong>
+                                    </span>
+                                </div>
+                                <div class="comment-date" th:text="${#temporals.format(comment.commentDate, 'dd/MM/yyyy HH:mm')}">Date</div>
                             </div>
-                            <div class="comment-date" th:text="${#temporals.format(comment.commentDate, 'dd/MM/yyyy HH:mm')}">Date</div>
+                            <div class="comment-text" th:text="${comment.commentText}">Comment text</div>
+                            <div th:if="${comment.attachmentFilename != null}" class="comment-attachment">
+                                <a th:href="@{/comment-attachment/{filename}(filename=${comment.attachmentFilename})}" 
+                                   th:text="'📎 ' + ${comment.attachmentOriginalName != null ? comment.attachmentOriginalName : 'Attachment'}" 
+                                   class="attachment-link" target="_blank">
+                                    📎 Attachment
+                                </a>
+                            </div>
+                            <div class="comment-actions">
+                                <button class="reply-btn" th:onclick="'toggleReplyForm(' + ${comment.commentId} + ')'">💬 Reply</button>
+                            </div>
+                            
+                            <!-- Reply form (initially hidden) -->
+                            <div th:id="'reply-form-' + ${comment.commentId}" class="reply-form" style="display: none;">
+                                <form th:action="@{/sightings/{id}/comment(id=${currentSighting.sightingId})}" method="post" enctype="multipart/form-data">
+                                    <input type="hidden" name="parentCommentId" th:value="${comment.commentId}" />
+                                    <div class="reply-input-section">
+                                        <textarea name="commentText" th:placeholder="'Reply to ' + ${comment.commenterUsername != null ? comment.commenterUsername : 'Anonymous'} + '...'" required></textarea>
+                                        <div class="reply-options">
+                                            <div class="comment-file-upload">
+                                                <input type="file" name="attachment" th:id="'replyAttachment' + ${comment.commentId}" accept="image/*,video/*,.pdf,.doc,.docx,.txt" style="display: none;" />
+                                                <label th:for="'replyAttachment' + ${comment.commentId}" class="btn file-upload-btn">📎 Attach File</label>
+                                                <span th:id="'selectedReplyFileName' + ${comment.commentId}" class="selected-file-name"></span>
+                                            </div>
+                                            <label>
+                                                <input type="checkbox" name="isAnonymous" value="true" />
+                                                Post anonymously
+                                            </label>
+                                            <input type="hidden" name="userId" value="1" />
+                                            <div class="reply-buttons">
+                                                <button type="submit" class="btn comment-btn">Post Reply</button>
+                                                <button type="button" class="btn cancel-btn" th:onclick="'toggleReplyForm(' + ${comment.commentId} + ')'">Cancel</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
                         </div>
-                        <div class="comment-text" th:text="${comment.commentText}">Comment text</div>
-                        <div th:if="${comment.attachmentFilename != null}" class="comment-attachment">
-                            <a th:href="@{/comment-attachment/{filename}(filename=${comment.attachmentFilename})}" 
-                               th:text="'📎 ' + ${comment.attachmentOriginalName != null ? comment.attachmentOriginalName : 'Attachment'}" 
-                               class="attachment-link" target="_blank">
-                                📎 Attachment
-                            </a>
+                        
+                        <!-- Replies -->
+                        <div class="replies-container">
+                            <div th:each="reply : ${comments}" th:if="${reply.parentCommentId != null and reply.parentCommentId == comment.commentId}" 
+                                 class="comment-item reply" th:classappend="'level-' + ${reply.replyLevel}">
+                                <div class="reply-indicator">
+                                    <span class="reply-arrow">↳</span>
+                                    <span class="reply-to" th:if="${reply.parentCommenterUsername != null}">
+                                        Replying to <strong th:text="${reply.parentCommenterUsername}">Parent User</strong>
+                                    </span>
+                                </div>
+                                <div class="comment-header">
+                                    <div class="comment-author">
+                                        <span th:if="${!reply.isAnonymous and reply.commenterUsername != null}">
+                                            <strong th:text="${reply.commenterUsername}">Username</strong>
+                                        </span>
+                                        <span th:if="${reply.isAnonymous or reply.commenterUsername == null}">
+                                            <strong>Anonymous</strong>
+                                        </span>
+                                    </div>
+                                    <div class="comment-date" th:text="${#temporals.format(reply.commentDate, 'dd/MM/yyyy HH:mm')}">Date</div>
+                                </div>
+                                <div class="comment-text" th:text="${reply.commentText}">Reply text</div>
+                                <div th:if="${reply.attachmentFilename != null}" class="comment-attachment">
+                                    <a th:href="@{/comment-attachment/{filename}(filename=${reply.attachmentFilename})}" 
+                                       th:text="'📎 ' + ${reply.attachmentOriginalName != null ? reply.attachmentOriginalName : 'Attachment'}" 
+                                       class="attachment-link" target="_blank">
+                                        📎 Attachment
+                                    </a>
+                                </div>
+                                <div class="comment-actions" th:if="${reply.replyLevel < 3}">
+                                    <button class="reply-btn" th:onclick="'toggleReplyForm(' + ${reply.commentId} + ')'">💬 Reply</button>
+                                </div>
+                                
+                                <!-- Reply to reply form -->
+                                <div th:id="'reply-form-' + ${reply.commentId}" class="reply-form" style="display: none;">
+                                    <form th:action="@{/sightings/{id}/comment(id=${currentSighting.sightingId})}" method="post" enctype="multipart/form-data">
+                                        <input type="hidden" name="parentCommentId" th:value="${reply.commentId}" />
+                                        <div class="reply-input-section">
+                                            <textarea name="commentText" th:placeholder="'Reply to ' + ${reply.commenterUsername != null ? reply.commenterUsername : 'Anonymous'} + '...'" required></textarea>
+                                            <div class="reply-options">
+                                                <div class="comment-file-upload">
+                                                    <input type="file" name="attachment" th:id="'replyAttachment' + ${reply.commentId}" accept="image/*,video/*,.pdf,.doc,.docx,.txt" style="display: none;" />
+                                                    <label th:for="'replyAttachment' + ${reply.commentId}" class="btn file-upload-btn">📎 Attach File</label>
+                                                    <span th:id="'selectedReplyFileName' + ${reply.commentId}" class="selected-file-name"></span>
+                                                </div>
+                                                <label>
+                                                    <input type="checkbox" name="isAnonymous" value="true" />
+                                                    Post anonymously
+                                                </label>
+                                                <input type="hidden" name="userId" value="1" />
+                                                <div class="reply-buttons">
+                                                    <button type="submit" class="btn comment-btn">Post Reply</button>
+                                                    <button type="button" class="btn cancel-btn" th:onclick="'toggleReplyForm(' + ${reply.commentId} + ')'">Cancel</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -191,7 +285,48 @@
                     }
                 });
             }
+            
+            // Handle reply attachment file selections
+            document.addEventListener('change', function(e) {
+                if (e.target.id && e.target.id.startsWith('replyAttachment')) {
+                    const commentId = e.target.id.replace('replyAttachment', '');
+                    const selectedFileName = document.getElementById('selectedReplyFileName' + commentId);
+                    
+                    if (selectedFileName) {
+                        if (e.target.files && e.target.files.length > 0) {
+                            const fileName = e.target.files[0].name;
+                            selectedFileName.textContent = fileName;
+                            selectedFileName.style.display = 'inline';
+                        } else {
+                            selectedFileName.textContent = '';
+                            selectedFileName.style.display = 'none';
+                        }
+                    }
+                }
+            });
         });
+        
+        function toggleReplyForm(commentId) {
+            const replyForm = document.getElementById('reply-form-' + commentId);
+            if (replyForm) {
+                if (replyForm.style.display === 'none' || replyForm.style.display === '') {
+                    // Hide all other reply forms
+                    const allReplyForms = document.querySelectorAll('.reply-form');
+                    allReplyForms.forEach(form => form.style.display = 'none');
+                    
+                    // Show this reply form
+                    replyForm.style.display = 'block';
+                    
+                    // Focus on the textarea
+                    const textarea = replyForm.querySelector('textarea');
+                    if (textarea) {
+                        textarea.focus();
+                    }
+                } else {
+                    replyForm.style.display = 'none';
+                }
+            }
+        }
     </script>
 </body>
 </html>

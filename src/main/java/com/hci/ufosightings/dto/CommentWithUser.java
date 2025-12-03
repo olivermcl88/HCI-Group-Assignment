@@ -21,4 +21,7 @@ public class CommentWithUser {
     private String commenterFirstName;
     private String attachmentFilename;
     private String attachmentOriginalName;
+    private Long parentCommentId;
+    private Integer replyLevel;
+    private String parentCommenterUsername;
 }

@@ -242,4 +242,7 @@
     <!-- Include comment attachments changelog -->
     <include file="comment-attachments.xml" relativeToChangelogFile="true"/>
 
+    <!-- Include comment replies changelog -->
+    <include file="comment-replies.xml" relativeToChangelogFile="true"/>
+
 </databaseChangeLog>

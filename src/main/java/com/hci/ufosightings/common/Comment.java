@@ -41,4 +41,10 @@ public class Comment {
     
     @Column(name = "attachment_original_name")
     private String attachmentOriginalName;
+    
+    @Column(name = "parent_comment_id")
+    private Long parentCommentId;
+    
+    @Column(name = "reply_level")
+    private Integer replyLevel;
 }

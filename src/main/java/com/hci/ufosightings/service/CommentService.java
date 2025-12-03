@@ -37,7 +37,9 @@ public class CommentService {
                 .commentDate(comment.getCommentDate())
                 .isAnonymous(comment.getIsAnonymous())
                 .attachmentFilename(comment.getAttachmentFilename())
-                .attachmentOriginalName(comment.getAttachmentOriginalName());
+                .attachmentOriginalName(comment.getAttachmentOriginalName())
+                .parentCommentId(comment.getParentCommentId())
+                .replyLevel(comment.getReplyLevel() != null ? comment.getReplyLevel() : 0);
         
         if (!comment.getIsAnonymous() && comment.getCommenterUserId() != null) {
             User user = userService.getUserById(comment.getCommenterUserId());
@@ -47,15 +49,47 @@ public class CommentService {
             }
         }
         
+        // Get parent commenter info for context
+        if (comment.getParentCommentId() != null) {
+            Optional<Comment> parentComment = commentDao.findById(comment.getParentCommentId());
+            if (parentComment.isPresent() && !parentComment.get().getIsAnonymous()) {
+                User parentUser = userService.getUserById(parentComment.get().getCommenterUserId());
+                if (parentUser != null) {
+                    builder.parentCommenterUsername(parentUser.getUsername());
+                }
+            } else {
+                builder.parentCommenterUsername("Anonymous");
+            }
+        }
+        
         return builder.build();
     }
     
     public Comment addComment(Long sightingId, Long commenterUserId, String commentText, Boolean isAnonymous) {
-        return addComment(sightingId, commenterUserId, commentText, isAnonymous, null, null);
+        return addComment(sightingId, commenterUserId, commentText, isAnonymous, null, null, null);
     }
     
     public Comment addComment(Long sightingId, Long commenterUserId, String commentText, Boolean isAnonymous,
                             String attachmentFilename, String attachmentOriginalName) {
+        return addComment(sightingId, commenterUserId, commentText, isAnonymous, attachmentFilename, attachmentOriginalName, null);
+    }
+    
+    public Comment addComment(Long sightingId, Long commenterUserId, String commentText, Boolean isAnonymous,
+                            String attachmentFilename, String attachmentOriginalName, Long parentCommentId) {
+        Integer replyLevel = 0;
+        
+        // Calculate reply level based on parent comment
+        if (parentCommentId != null) {
+            Optional<Comment> parentComment = commentDao.findById(parentCommentId);
+            if (parentComment.isPresent()) {
+                replyLevel = (parentComment.get().getReplyLevel() != null ? parentComment.get().getReplyLevel() : 0) + 1;
+                // Limit reply depth to 3 levels to prevent excessive nesting
+                if (replyLevel > 3) {
+                    replyLevel = 3;
+                }
+            }
+        }
+        
         Comment comment = Comment.builder()
                 .sightingId(sightingId)
                 .commenterUserId(commenterUserId)
@@ -64,11 +98,13 @@ public class CommentService {
                 .isAnonymous(isAnonymous != null ? isAnonymous : false)
                 .attachmentFilename(attachmentFilename)
                 .attachmentOriginalName(attachmentOriginalName)
+                .parentCommentId(parentCommentId)
+                .replyLevel(replyLevel)
                 .build();
         
         Comment savedComment = commentDao.save(comment);
-        log.info("New comment added: ID={}, SightingID={}, UserID={}", 
-                savedComment.getCommentId(), sightingId, commenterUserId);
+        log.info("New comment added: ID={}, SightingID={}, UserID={}, ParentID={}, Level={}", 
+                savedComment.getCommentId(), sightingId, commenterUserId, parentCommentId, replyLevel);
         
         return savedComment;
     }

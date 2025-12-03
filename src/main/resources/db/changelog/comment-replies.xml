@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="add-comment-replies" author="system">
+        <addColumn tableName="comments">
+            <column name="parent_comment_id" type="BIGINT">
+                <constraints nullable="true"/>
+            </column>
+            <column name="reply_level" type="INT" defaultValue="0">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+        
+        <!-- Add foreign key to parent comment -->
+        <addForeignKeyConstraint 
+            baseTableName="comments" 
+            baseColumnNames="parent_comment_id"
+            constraintName="fk_comments_parent"
+            referencedTableName="comments" 
+            referencedColumnNames="comment_id"
+            onDelete="CASCADE"/>
+    </changeSet>
+
+</databaseChangeLog>
