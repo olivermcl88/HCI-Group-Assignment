@@ -80,4 +80,17 @@ public class CommentService {
         commentDao.deleteById(commentId);
         log.info("Comment deleted: ID={}", commentId);
     }
+    
+    public void deleteCommentsByPattern(String pattern) {
+        List<Comment> allComments = commentDao.findAll();
+        List<Comment> commentsToDelete = allComments.stream()
+                .filter(comment -> comment.getCommentText().startsWith(pattern))
+                .collect(Collectors.toList());
+        
+        for (Comment comment : commentsToDelete) {
+            commentDao.deleteById(comment.getCommentId());
+        }
+        
+        log.info("Deleted {} comments matching pattern: {}", commentsToDelete.size(), pattern);
+    }
 }
