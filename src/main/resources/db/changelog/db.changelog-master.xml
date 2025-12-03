@@ -152,4 +152,44 @@
         </loadData>
     </changeSet>
 
+    <!-- Create comments table -->
+    <changeSet id="create-comments-table" author="rdev (generated)">
+        <createTable tableName="comments">
+            <column name="comment_id" type="INT">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="sighting_id" type="INT"/>
+            <column name="commenter_user_id" type="INT"/>
+            <column name="comment_text" type="TEXT"/>
+            <column name="comment_date" type="TIMESTAMP"/>
+            <column name="is_anonymous" type="BOOLEAN" defaultValue="false"/>
+        </createTable>
+
+        <!-- foreign key to sightings.sighting_id -->
+        <addForeignKeyConstraint baseTableName="comments" baseColumnNames="sighting_id"
+                                 constraintName="fk_comments_sighting"
+                                 referencedTableName="sightings" referencedColumnNames="sighting_id"
+                                 onDelete="CASCADE"/>
+
+        <!-- foreign key to users.user_id for commenter -->
+        <addForeignKeyConstraint baseTableName="comments" baseColumnNames="commenter_user_id"
+                                 constraintName="fk_comments_user"
+                                 referencedTableName="users" referencedColumnNames="user_id"
+                                 onDelete="SET NULL"/>
+
+        <loadData file="data/comments.csv" relativeToChangelogFile="true" tableName="comments">
+            <column header="comment_id" name="comment_id" type="NUMERIC"/>
+            <column header="sighting_id" name="sighting_id" type="NUMERIC"/>
+            <column header="commenter_user_id" name="commenter_user_id" type="NUMERIC"/>
+            <column header="comment_text" name="comment_text" type="STRING"/>
+            <column header="comment_date" name="comment_date" type="TIMESTAMP"/>
+            <column header="is_anonymous" name="is_anonymous" type="BOOLEAN"/>
+        </loadData>
+    </changeSet>
+
+    <!-- Add auto-increment to comment_id -->
+    <changeSet id="add-autoincrement-comment-id" author="rdev (generated)">
+        <addAutoIncrement tableName="comments" columnName="comment_id" columnDataType="INT"/>
+    </changeSet>
+
 </databaseChangeLog>
