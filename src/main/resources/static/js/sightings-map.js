@@ -57,13 +57,11 @@ function initializeMap() {
             attributionControl: true
         });
         
-        // Add OpenStreetMap tiles
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
             maxZoom: 18
         }).addTo(currentMap);
         
-        // Custom UFO icon
         const ufoIcon = L.divIcon({
             html: '🛸',
             iconSize: [30, 30],
@@ -72,10 +70,8 @@ function initializeMap() {
             className: 'ufo-marker'
         });
         
-        // Add marker for the sighting location
         const marker = L.marker([lat, lng], {icon: ufoIcon}).addTo(currentMap);
         
-        // Add popup with sighting information
         marker.bindPopup(`
             <div style="text-align: center; font-size: 14px;">
                 <strong>🛸 UFO Sighting</strong><br/>
@@ -86,7 +82,6 @@ function initializeMap() {
         
         console.log('Map initialized successfully for coordinates:', lat, lng);
         
-        // Force map to resize after initialization
         setTimeout(function() {
             if (currentMap) {
                 currentMap.invalidateSize();
@@ -100,16 +95,13 @@ function initializeMap() {
             try {
                 currentMap.remove();
             } catch(e) {
-                // Ignore cleanup errors
             }
             currentMap = null;
         }
     }
 }
 
-/**
- * Clean up map resources
- */
+
 function cleanupMap() {
     if (currentMap) {
         try {
@@ -128,7 +120,6 @@ function initMapOnReady() {
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', initializeMap);
     } else {
-        // DOM is already ready
         initializeMap();
     }
 }
@@ -137,14 +128,12 @@ function initMapOnReady() {
  * Set up event listeners for map functionality
  */
 function setupMapEventListeners() {
-    // Clean up on page unload
     window.addEventListener('beforeunload', cleanupMap);
-    
-    // Initialize map
+
     initMapOnReady();
 }
 
-// Auto-initialize when script loads
+
 if (document.getElementById('map')) {
     setupMapEventListeners();
 }

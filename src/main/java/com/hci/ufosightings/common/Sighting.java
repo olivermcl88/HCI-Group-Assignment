@@ -57,7 +57,6 @@ public class Sighting {
     @Column(name = "hoax_votes")
     private Integer hoaxVotes;
     
-    // Helper methods for validation percentages
     public int getTotalVotes() {
         return (legitVotes != null ? legitVotes : 0) + 
                (uncertainVotes != null ? uncertainVotes : 0) + 

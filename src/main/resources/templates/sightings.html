@@ -6,7 +6,6 @@
     <title>Sighting Details</title>
     
     <link rel="stylesheet" href="/ufo-app/css/sightings.css" />
-    <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 </head>
 <body>
@@ -76,10 +75,8 @@
                 <button type="submit" name="voteType" value="hoax" class="vote-btn vote-hoax">Hoax</button>
             </form>
 
-            <!-- Comments Section -->
             <h2>Comments</h2>
             
-            <!-- Add Comment Form -->
             <form th:action="@{/sightings/{id}/comment(id=${currentSighting.sightingId})}" method="post" class="comment-form">
                 <div class="comment-input-section">
                     <textarea name="commentText" placeholder="Share your thoughts about this sighting..." required></textarea>
@@ -94,7 +91,6 @@
                 </div>
             </form>
 
-            <!-- Display Comments -->
             <div class="comments-list">
                 <div th:if="${comments != null and !comments.isEmpty()}">
                     <div th:each="comment : ${comments}" class="comment-item">
@@ -124,9 +120,7 @@
         </div>
     </div>
 
-    <!-- Leaflet JavaScript -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <!-- Custom map JavaScript -->
     <script th:if="${currentSighting != null}" src="/ufo-app/js/sightings-map.js"></script>
 </body>
 </html>

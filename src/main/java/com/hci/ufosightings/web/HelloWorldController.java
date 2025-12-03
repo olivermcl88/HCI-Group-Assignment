@@ -43,22 +43,18 @@ public class HelloWorldController {
         return "hello-world";
     }
 
-    // Controller for the sightings page
     @GetMapping("sightings")
     public String sightings(Model model) {
         List<Sighting> allSightings = sightingService.getAllSightings();
         model.addAttribute("sightings", allSightings);
         
-        // If there are sightings, show the first one by default
         if (!allSightings.isEmpty()) {
             Sighting firstSighting = allSightings.get(0);
             model.addAttribute("currentSighting", firstSighting);
             
-            // Get reporter information
             User reporter = userService.getUserById(firstSighting.getReporterUserId());
             model.addAttribute("reporter", reporter);
             
-            // Get comments for this sighting
             List<CommentWithUser> comments = commentService.getCommentsBySightingId(firstSighting.getSightingId());
             model.addAttribute("comments", comments);
         }
@@ -66,7 +62,6 @@ public class HelloWorldController {
         return "sightings";
     }
     
-    // Controller for viewing a specific sighting
     @GetMapping("sightings/{id}")
     public String viewSighting(@PathVariable Long id, Model model) {
         List<Sighting> allSightings = sightingService.getAllSightings();
@@ -76,29 +71,24 @@ public class HelloWorldController {
         if (sighting.isPresent()) {
             model.addAttribute("currentSighting", sighting.get());
             
-            // Get reporter information
             User reporter = userService.getUserById(sighting.get().getReporterUserId());
             model.addAttribute("reporter", reporter);
             
-            // Get comments for this sighting
             List<CommentWithUser> comments = commentService.getCommentsBySightingId(id);
             model.addAttribute("comments", comments);
         } else {
-            // If sighting not found, redirect to general sightings page
             return "redirect:/ufo-app/sightings";
         }
         
         return "sightings";
     }
     
-    // Controller for voting on a sighting
     @PostMapping("sightings/{id}/vote")
     public String voteOnSighting(@PathVariable Long id, @RequestParam String voteType) {
         sightingService.voteOnSighting(id, voteType);
         return "redirect:/ufo-app/sightings/" + id;
     }
     
-    // Controller for adding a comment
     @PostMapping("sightings/{id}/comment")
     public String addComment(@PathVariable Long id, 
                            @RequestParam String commentText,
