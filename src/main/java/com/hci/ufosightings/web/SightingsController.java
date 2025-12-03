@@ -28,6 +28,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -60,9 +61,12 @@ public class SightingsController {
     public String sightings(Model model) {
         List<Sighting> allSightings = sightingService.getAllSightings();
         model.addAttribute("sightings", allSightings);
-        
+        Map<Long, String> areasMap = areaService.getAllAreas().stream()
+                .collect(Collectors.toMap(a -> a.getAreaId(), a -> a.getAreaName()));
+        model.addAttribute("areasMap", areasMap);
+
         if (!allSightings.isEmpty()) {
-            Sighting firstSighting = allSightings.getFirst();
+            Sighting firstSighting = allSightings.get(0);
             model.addAttribute("currentSighting", firstSighting);
             
             User reporter = userService.getUserById(firstSighting.getReporterUserId());
@@ -73,6 +77,10 @@ public class SightingsController {
                 .filter(comment -> !comment.getCommentText().startsWith("📎 Evidence uploaded:"))
                 .collect(java.util.stream.Collectors.toList());
             model.addAttribute("comments", comments);
+            // add area name for current sighting if present
+            if (firstSighting.getAreaId() != null) {
+                areaService.getAreaById(firstSighting.getAreaId()).ifPresent(area -> model.addAttribute("currentSightingAreaName", area.getAreaName()));
+            }
         }
         
         return "sightings";
@@ -85,9 +93,10 @@ public class SightingsController {
         
         Optional<Sighting> sighting = sightingService.getSightingById(id);
         if (sighting.isPresent()) {
-            model.addAttribute("currentSighting", sighting.get());
-            
-            User reporter = userService.getUserById(sighting.get().getReporterUserId());
+            Sighting current = sighting.get();
+            model.addAttribute("currentSighting", current);
+
+            User reporter = userService.getUserById(current.getReporterUserId());
             model.addAttribute("reporter", reporter);
             
             List<CommentWithUser> allComments = commentService.getCommentsBySightingId(id);
@@ -95,13 +104,16 @@ public class SightingsController {
                 .filter(comment -> !comment.getCommentText().startsWith("📎 Evidence uploaded:"))
                 .collect(java.util.stream.Collectors.toList());
             model.addAttribute("comments", comments);
-        } else {
-            return "redirect:/sightings";
-        }
-        
-        return "sightings";
-    }
-    
+            if (current.getAreaId() != null) {
+                areaService.getAreaById(current.getAreaId()).ifPresent(area -> model.addAttribute("currentSightingAreaName", area.getAreaName()));
+            }
+         } else {
+             return "redirect:/sightings";
+         }
+
+         return "sightings";
+     }
+
     @PostMapping("sightings/{id}/vote")
     public String voteOnSighting(@PathVariable Long id, @RequestParam String voteType) {
         sightingService.voteOnSighting(id, voteType);
@@ -122,8 +134,15 @@ public class SightingsController {
     }
 
     @GetMapping("sightings/new")
-    public String showNewSightingForm(Model model) {
-        model.addAttribute("sighting", new Sighting());
+    public String showNewSightingForm(Model model, @RequestParam(required = false) Long areaId) {
+        Sighting s = new Sighting();
+        model.addAttribute("areas", areaService.getAllAreas());
+        if (areaId != null) {
+            s.setAreaId(areaId);
+            model.addAttribute("areaId", areaId);
+            areaService.getAreaById(areaId).ifPresent(area -> model.addAttribute("areaName", area.getAreaName()));
+        }
+        model.addAttribute("sighting", s);
         return "report-sighting";
     }
 
@@ -135,7 +154,17 @@ public class SightingsController {
                                     @RequestParam(required = false) Double latitude,
                                     @RequestParam(required = false) Double longitude,
                                     @RequestParam(required = false) String shape,
-                                    @RequestParam(required = false) String description) {
+                                    @RequestParam(required = false) String description,
+                                    @RequestParam(required = false) String areaId) {
+
+        Long parsedAreaId = null;
+        if (areaId != null && !areaId.trim().isEmpty()) {
+            try {
+                parsedAreaId = Long.parseLong(areaId);
+            } catch (NumberFormatException ex) {
+                log.warn("Invalid areaId submitted: {}", areaId);
+            }
+        }
 
         Sighting s = Sighting.builder()
                 .title(title)
@@ -147,6 +176,7 @@ public class SightingsController {
                 .longitude(longitude)
                 .shape(shape)
                 .description(description)
+                .areaId(parsedAreaId)
                 .legitVotes(0)
                 .uncertainVotes(0)
                 .hoaxVotes(0)

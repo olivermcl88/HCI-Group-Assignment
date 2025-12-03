@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @Slf4j
@@ -25,5 +26,9 @@ public class AreaService {
         return areaDao.findById(areaId)
                 .map(Area::getAssignedUsers)
                 .orElse(Collections.emptyList());
+    }
+
+    public Optional<Area> getAreaById(Long areaId) {
+        return areaDao.findById(areaId);
     }
 }

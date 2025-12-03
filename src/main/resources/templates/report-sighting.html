@@ -17,6 +17,20 @@
 
         <form th:action="@{/sightings/new}" method="post" enctype="multipart/form-data" class="report-form">
             <div class="form-row">
+                <label for="areaId">Area</label>
+                <select id="areaId" name="areaId">
+                    <option value="" th:text="'-- Select area --'"></option>
+                    <option th:each="area : ${areas}"
+                            th:value="${area.areaId}"
+                            th:text="${area.areaName}"
+                            th:selected="${area.areaId == areaId}">
+                        Area Name
+                    </option>
+                </select>
+                <div th:if="${areas == null or #lists.isEmpty(areas)}" style="color:#666; font-size:13px; margin-top:6px;">No areas available.</div>
+            </div>
+
+            <div class="form-row">
                 <label for="title">Title</label>
                 <input type="text" id="title" name="title" required />
             </div>
