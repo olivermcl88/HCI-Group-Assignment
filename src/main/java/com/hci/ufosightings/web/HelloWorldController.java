@@ -17,9 +17,23 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Stream;
+import java.util.ArrayList;
+import java.util.stream.Collectors;
 
 @Controller
 @RequiredArgsConstructor
@@ -55,7 +69,10 @@ public class HelloWorldController {
             User reporter = userService.getUserById(firstSighting.getReporterUserId());
             model.addAttribute("reporter", reporter);
             
-            List<CommentWithUser> comments = commentService.getCommentsBySightingId(firstSighting.getSightingId());
+            List<CommentWithUser> allComments = commentService.getCommentsBySightingId(firstSighting.getSightingId());
+            List<CommentWithUser> comments = allComments.stream()
+                .filter(comment -> !comment.getCommentText().startsWith("📎 Evidence uploaded:"))
+                .collect(java.util.stream.Collectors.toList());
             model.addAttribute("comments", comments);
         }
         
@@ -74,7 +91,10 @@ public class HelloWorldController {
             User reporter = userService.getUserById(sighting.get().getReporterUserId());
             model.addAttribute("reporter", reporter);
             
-            List<CommentWithUser> comments = commentService.getCommentsBySightingId(id);
+            List<CommentWithUser> allComments = commentService.getCommentsBySightingId(id);
+            List<CommentWithUser> comments = allComments.stream()
+                .filter(comment -> !comment.getCommentText().startsWith("📎 Evidence uploaded:"))
+                .collect(java.util.stream.Collectors.toList());
             model.addAttribute("comments", comments);
         } else {
             return "redirect:/sightings";
@@ -100,6 +120,125 @@ public class HelloWorldController {
         }
         
         return "redirect:/sightings/" + id;
+    }
+
+    @PostMapping("sightings/{id}/upload-evidence")
+    public String uploadEvidence(@PathVariable Long id, 
+                               @RequestParam("evidence") MultipartFile file,
+                               @RequestParam(defaultValue = "1") Long userId) {
+        if (!file.isEmpty()) {
+            try {
+                // Create uploads directory if it doesn't exist
+                Path uploadPath = Paths.get("uploads/evidence");
+                if (!Files.exists(uploadPath)) {
+                    Files.createDirectories(uploadPath);
+                }
+                
+                // Generate unique filename that preserves original name
+                String originalFilename = file.getOriginalFilename();
+                String cleanOriginalName = originalFilename != null ? originalFilename.replaceAll("[^a-zA-Z0-9.-]", "_") : "file";
+                String fileExtension = "";
+                if (originalFilename != null && originalFilename.contains(".")) {
+                    fileExtension = originalFilename.substring(originalFilename.lastIndexOf("."));
+                }
+                String filename = "evidence_" + id + "_" + UUID.randomUUID().toString() + "_" + cleanOriginalName;
+                
+                // Save file
+                Path filePath = uploadPath.resolve(filename);
+                Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+                
+                log.info("Evidence file uploaded: {} for sighting {}", filename, id);
+                
+            } catch (IOException e) {
+                log.error("Failed to upload evidence file", e);
+            }
+        }
+        return "redirect:/sightings/" + id;
+    }
+
+    @GetMapping("sightings/{id}/evidence")
+    public String viewEvidence(@PathVariable Long id, Model model) {
+        List<String> evidenceFiles = getEvidenceFiles(id);
+        model.addAttribute("evidenceFiles", evidenceFiles);
+        model.addAttribute("sightingId", id);
+        
+        // Also get sighting info for context
+        Optional<Sighting> sighting = sightingService.getSightingById(id);
+        if (sighting.isPresent()) {
+            model.addAttribute("sighting", sighting.get());
+        }
+        
+        return "evidence-view";
+    }
+    
+    private List<String> getEvidenceFiles(Long sightingId) {
+        List<String> files = new ArrayList<>();
+        
+        try {
+            Path evidencePath = Paths.get("uploads/evidence");
+            if (Files.exists(evidencePath)) {
+                try (Stream<Path> paths = Files.list(evidencePath)) {
+                    paths.filter(path -> {
+                        String filename = path.getFileName().toString();
+                        return filename.startsWith("evidence_" + sightingId + "_");
+                    })
+                    .forEach(path -> {
+                        String storedFilename = path.getFileName().toString();
+                        String originalName = extractOriginalFilenameFromPattern(storedFilename);
+                        files.add(storedFilename + "|" + originalName);
+                    });
+                }
+            }
+        } catch (IOException e) {
+            log.error("Failed to list evidence files for sighting " + sightingId, e);
+        }
+        return files;
+    }
+    
+    private String extractOriginalFilenameFromPattern(String storedFilename) {
+        // Pattern: evidence_{sightingId}_{uuid}_{originalFilename}
+        String[] parts = storedFilename.split("_", 4);
+        if (parts.length >= 4) {
+            return parts[3]; // The original filename part
+        }
+        
+        // Fallback for old pattern
+        String extension = "";
+        int lastDot = storedFilename.lastIndexOf('.');
+        if (lastDot > 0) {
+            extension = storedFilename.substring(lastDot);
+        }
+        return "Evidence File" + extension;
+    }
+
+    @PostMapping("admin/cleanup-evidence-comments")
+    public String cleanupEvidenceComments() {
+        // This is a one-time cleanup method - you can call it to remove existing evidence comments
+        // In a real application, you'd want proper admin authentication here
+        try {
+            commentService.deleteCommentsByPattern("📎 Evidence uploaded:");
+            log.info("Evidence comments cleaned up successfully");
+        } catch (Exception e) {
+            log.error("Failed to cleanup evidence comments", e);
+        }
+        return "redirect:/sightings";
+    }
+
+    @GetMapping("evidence/{filename}")
+    public ResponseEntity<Resource> downloadEvidence(@PathVariable String filename) {
+        try {
+            Path filePath = Paths.get("uploads/evidence").resolve(filename);
+            Resource resource = new UrlResource(filePath.toUri());
+            
+            if (resource.exists() && resource.isReadable()) {
+                return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + resource.getFilename() + "\"")
+                    .body(resource);
+            }
+        } catch (Exception e) {
+            log.error("Failed to download evidence file: " + filename, e);
+        }
+        return ResponseEntity.notFound().build();
     }
 
 }

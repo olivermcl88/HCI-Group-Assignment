@@ -52,8 +52,12 @@
             <textarea readonly th:text="${currentSighting.description}">Lorem ipsum dolor sit amet, consectetur adipiscing elit...</textarea>
 
             <div class="evidence-buttons">
-                <button class="btn">📄 View Evidence</button>
-                <button class="btn">⬆️ Upload Evidence</button>
+                <a th:href="@{/sightings/{id}/evidence(id=${currentSighting.sightingId})}" class="btn">📄 View Evidence</a>
+                <form th:action="@{/sightings/{id}/upload-evidence(id=${currentSighting.sightingId})}" method="post" enctype="multipart/form-data" class="evidence-upload-form" style="display: inline;">
+                    <input type="file" name="evidence" accept="image/*,video/*,.pdf,.doc,.docx" id="evidenceFile" style="display: none;" />
+                    <input type="hidden" name="userId" value="1" />
+                    <button type="button" class="btn evidence-btn" onclick="document.getElementById('evidenceFile').click()">📁 Upload Evidence</button>
+                </form>
             </div>
 
             <h2>Community Validation</h2>
@@ -122,5 +126,29 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script th:if="${currentSighting != null}" src="/ufo-app/js/sightings-map.js"></script>
+    <script>
+        // Handle evidence file upload
+        document.addEventListener('DOMContentLoaded', function() {
+            const fileInput = document.getElementById('evidenceFile');
+            const uploadForm = document.querySelector('.evidence-upload-form');
+            
+            if (fileInput && uploadForm) {
+                fileInput.addEventListener('change', function() {
+                    if (this.files && this.files.length > 0) {
+                        // Show selected file name
+                        const fileName = this.files[0].name;
+                        const confirmUpload = confirm(`Upload "${fileName}" as evidence?`);
+                        
+                        if (confirmUpload) {
+                            uploadForm.submit();
+                        } else {
+                            // Clear the file input
+                            this.value = '';
+                        }
+                    }
+                });
+            }
+        });
+    </script>
 </body>
 </html>

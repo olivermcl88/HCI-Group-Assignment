@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evidence Files - UFO Sightings</title>
+    <link rel="stylesheet" th:href="@{/css/sightings.css}">
+    <style>
+        .evidence-container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .evidence-header {
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .evidence-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .evidence-item {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background-color 0.2s;
+        }
+        
+        .evidence-item:hover {
+            background: #e9ecef;
+        }
+        
+        .evidence-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .file-icon {
+            font-size: 20px;
+            color: #007bff;
+        }
+        
+        .file-name {
+            font-weight: 500;
+            color: #343a40;
+        }
+        
+        .download-btn {
+            background: #28a745;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            text-decoration: none;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+        
+        .download-btn:hover {
+            background: #218838;
+            color: white;
+            text-decoration: none;
+        }
+        
+        .back-btn {
+            background: #6c757d;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            text-decoration: none;
+            margin-bottom: 20px;
+            display: inline-block;
+        }
+        
+        .back-btn:hover {
+            background: #5a6268;
+            text-decoration: none;
+            color: white;
+        }
+        
+        .no-evidence {
+            text-align: center;
+            color: #6c757d;
+            font-style: italic;
+            padding: 40px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border: 2px dashed #dee2e6;
+        }
+        
+        .sighting-context {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="evidence-container">
+        <a th:href="@{/sightings/{id}(id=${sightingId})}" class="back-btn">← Back to Sighting</a>
+        
+        <div class="evidence-header">
+            <h1>📁 Evidence Files</h1>
+            <div th:if="${sighting}" class="sighting-context">
+                <strong>Sighting:</strong> <span th:text="${sighting.title}"></span><br>
+                <strong>Location:</strong> <span th:text="${sighting.location}"></span><br>
+                <strong>Date:</strong> <span th:text="${#temporals.format(sighting.sightingDate, 'yyyy-MM-dd HH:mm')}"></span>
+            </div>
+        </div>
+        
+        <div th:if="${evidenceFiles != null and !evidenceFiles.empty}">
+            <p><strong>Total files:</strong> <span th:text="${#lists.size(evidenceFiles)}"></span></p>
+            
+            <ul class="evidence-list">
+                <li th:each="file : ${evidenceFiles}" class="evidence-item">
+                    <div class="evidence-info">
+                        <span class="file-icon">📎</span>
+                        <span class="file-name" th:text="${#strings.substringAfter(file, '|')}">filename.jpg</span>
+                    </div>
+                    <a th:href="@{/evidence/{filename}(filename=${#strings.substringBefore(file, '|')})}" 
+                       class="download-btn" 
+                       target="_blank">
+                        Download
+                    </a>
+                </li>
+            </ul>
+        </div>
+        
+        <div th:if="${evidenceFiles == null or evidenceFiles.empty}" class="no-evidence">
+            <p>🔍 No evidence files have been uploaded for this sighting yet.</p>
+            <a th:href="@{/sightings/{id}(id=${sightingId})}" class="download-btn">Upload Evidence</a>
+        </div>
+    </div>
+</body>
+</html>
