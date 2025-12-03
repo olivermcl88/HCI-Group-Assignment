@@ -157,7 +157,6 @@ public class SightingsController {
             return "redirect:/sightings/" + saved.getSightingId();
         }
         return "redirect:/sightings";
-        return "redirect:/sightings/" + id;
     }
 
     @PostMapping("sightings/{id}/upload-evidence")
@@ -202,9 +201,7 @@ public class SightingsController {
 
         // Also get sighting info for context
         Optional<Sighting> sighting = sightingService.getSightingById(id);
-        if (sighting.isPresent()) {
-            model.addAttribute("sighting", sighting.get());
-        }
+        sighting.ifPresent(value -> model.addAttribute("sighting", value));
 
         return "evidence-view";
     }
