@@ -77,7 +77,7 @@ public class HelloWorldController {
             List<CommentWithUser> comments = commentService.getCommentsBySightingId(id);
             model.addAttribute("comments", comments);
         } else {
-            return "redirect:/ufo-app/sightings";
+            return "redirect:/sightings";
         }
         
         return "sightings";
@@ -86,7 +86,7 @@ public class HelloWorldController {
     @PostMapping("sightings/{id}/vote")
     public String voteOnSighting(@PathVariable Long id, @RequestParam String voteType) {
         sightingService.voteOnSighting(id, voteType);
-        return "redirect:/ufo-app/sightings/" + id;
+        return "redirect:/sightings/" + id;
     }
     
     @PostMapping("sightings/{id}/comment")
@@ -99,7 +99,7 @@ public class HelloWorldController {
             commentService.addComment(id, userId, commentText.trim(), isAnonymous);
         }
         
-        return "redirect:/ufo-app/sightings/" + id;
+        return "redirect:/sightings/" + id;
     }
 
 }

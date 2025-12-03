@@ -172,17 +172,22 @@ body {
 }
 
 .comment-btn {
-    background: #30963d;
-    color: white;
-    padding: 8px 16px;
+    background: #007bff !important;
+    color: white !important;
+    padding: 10px 20px;
     border: none;
-    border-radius: 4px;
+    border-radius: 6px;
     cursor: pointer;
     font-size: 14px;
+    font-weight: 600;
+    transition: background-color 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0,123,255,0.3);
 }
 
 .comment-btn:hover {
-    background: #236b2f;
+    background: #0056b3 !important;
+    box-shadow: 0 3px 6px rgba(0,123,255,0.4);
+    transform: translateY(-1px);
 }
 
 .comments-list {
