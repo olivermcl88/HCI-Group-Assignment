@@ -12,7 +12,10 @@
     <div class="container">
         <!-- Navigation for different sightings -->
         <div th:if="${sightings != null and !sightings.isEmpty()}" class="sightings-nav">
-            <h3>All Sightings:</h3>
+            <div class="sightings-nav-header">
+                <h3>All Sightings:</h3>
+                <a th:href="@{/sightings/new}" class="btn add-btn">+ Report Sighting</a>
+            </div>
             <ul>
                 <li th:each="sighting : ${sightings}">
                     <a th:href="@{/sightings/{id}(id=${sighting.sightingId})}" 
@@ -131,14 +134,14 @@
         document.addEventListener('DOMContentLoaded', function() {
             const fileInput = document.getElementById('evidenceFile');
             const uploadForm = document.querySelector('.evidence-upload-form');
-            
+
             if (fileInput && uploadForm) {
                 fileInput.addEventListener('change', function() {
                     if (this.files && this.files.length > 0) {
                         // Show selected file name
                         const fileName = this.files[0].name;
                         const confirmUpload = confirm(`Upload "${fileName}" as evidence?`);
-                        
+
                         if (confirmUpload) {
                             uploadForm.submit();
                         } else {

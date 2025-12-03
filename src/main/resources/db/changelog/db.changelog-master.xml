@@ -224,4 +224,16 @@
         <sql>ALTER TABLE comments ALTER COLUMN comment_id RESTART WITH 1000;</sql>
     </changeSet>
 
+  <changeSet id="add-autoincrement-sighting-id" author="rdev (generated)">
+        <addAutoIncrement tableName="sightings" columnName="sighting_id" columnDataType="INT"/>
+    </changeSet>
+
+    <changeSet id="set-sightings-identity-seed" author="rdev (generated)">
+        <preConditions onFail="MARK_RAN">
+            <dbms type="h2" />
+        </preConditions>
+        <!-- Set the restart value to 1000 (safe value above existing test data) -->
+        <sql>ALTER TABLE sightings ALTER COLUMN sighting_id RESTART WITH 1000;</sql>
+    </changeSet>
+
 </databaseChangeLog>

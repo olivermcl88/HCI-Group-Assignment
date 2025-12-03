@@ -1,6 +1,5 @@
 package com.hci.ufosightings.web;
 
-import com.hci.ufosightings.common.Comment;
 import com.hci.ufosightings.common.Sighting;
 import com.hci.ufosightings.common.User;
 import com.hci.ufosightings.dto.CommentWithUser;
@@ -38,7 +37,7 @@ import java.util.stream.Collectors;
 @Controller
 @RequiredArgsConstructor
 @Slf4j
-public class HelloWorldController {
+public class SightingsController {
 
     private final UserService userService;
     private final AreaService areaService;
@@ -63,7 +62,7 @@ public class HelloWorldController {
         model.addAttribute("sightings", allSightings);
         
         if (!allSightings.isEmpty()) {
-            Sighting firstSighting = allSightings.get(0);
+            Sighting firstSighting = allSightings.getFirst();
             model.addAttribute("currentSighting", firstSighting);
             
             User reporter = userService.getUserById(firstSighting.getReporterUserId());
@@ -122,8 +121,47 @@ public class HelloWorldController {
         return "redirect:/sightings/" + id;
     }
 
+    @GetMapping("sightings/new")
+    public String showNewSightingForm(Model model) {
+        model.addAttribute("sighting", new Sighting());
+        return "report-sighting";
+    }
+
+    @PostMapping("sightings/new")
+    public String submitNewSighting(@RequestParam String title,
+                                    @RequestParam(required = false) String sightingDate,
+                                    @RequestParam(required = false) Integer durationMinutes,
+                                    @RequestParam(required = false) String location,
+                                    @RequestParam(required = false) Double latitude,
+                                    @RequestParam(required = false) Double longitude,
+                                    @RequestParam(required = false) String shape,
+                                    @RequestParam(required = false) String description) {
+
+        Sighting s = Sighting.builder()
+                .title(title)
+                .reporterUserId(1L) // default/demo user
+                .sightingDate(sightingDate != null && !sightingDate.isEmpty() ? java.time.LocalDate.parse(sightingDate) : null)
+                .durationMinutes(durationMinutes)
+                .location(location)
+                .latitude(latitude)
+                .longitude(longitude)
+                .shape(shape)
+                .description(description)
+                .legitVotes(0)
+                .uncertainVotes(0)
+                .hoaxVotes(0)
+                .build();
+
+        Sighting saved = sightingService.saveSighting(s);
+        if (saved != null && saved.getSightingId() != null) {
+            return "redirect:/sightings/" + saved.getSightingId();
+        }
+        return "redirect:/sightings";
+        return "redirect:/sightings/" + id;
+    }
+
     @PostMapping("sightings/{id}/upload-evidence")
-    public String uploadEvidence(@PathVariable Long id, 
+    public String uploadEvidence(@PathVariable Long id,
                                @RequestParam("evidence") MultipartFile file,
                                @RequestParam(defaultValue = "1") Long userId) {
         if (!file.isEmpty()) {
@@ -133,7 +171,7 @@ public class HelloWorldController {
                 if (!Files.exists(uploadPath)) {
                     Files.createDirectories(uploadPath);
                 }
-                
+
                 // Generate unique filename that preserves original name
                 String originalFilename = file.getOriginalFilename();
                 String cleanOriginalName = originalFilename != null ? originalFilename.replaceAll("[^a-zA-Z0-9.-]", "_") : "file";
@@ -142,13 +180,13 @@ public class HelloWorldController {
                     fileExtension = originalFilename.substring(originalFilename.lastIndexOf("."));
                 }
                 String filename = "evidence_" + id + "_" + UUID.randomUUID().toString() + "_" + cleanOriginalName;
-                
+
                 // Save file
                 Path filePath = uploadPath.resolve(filename);
                 Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-                
+
                 log.info("Evidence file uploaded: {} for sighting {}", filename, id);
-                
+
             } catch (IOException e) {
                 log.error("Failed to upload evidence file", e);
             }
@@ -161,19 +199,19 @@ public class HelloWorldController {
         List<String> evidenceFiles = getEvidenceFiles(id);
         model.addAttribute("evidenceFiles", evidenceFiles);
         model.addAttribute("sightingId", id);
-        
+
         // Also get sighting info for context
         Optional<Sighting> sighting = sightingService.getSightingById(id);
         if (sighting.isPresent()) {
             model.addAttribute("sighting", sighting.get());
         }
-        
+
         return "evidence-view";
     }
-    
+
     private List<String> getEvidenceFiles(Long sightingId) {
         List<String> files = new ArrayList<>();
-        
+
         try {
             Path evidencePath = Paths.get("uploads/evidence");
             if (Files.exists(evidencePath)) {
@@ -194,14 +232,14 @@ public class HelloWorldController {
         }
         return files;
     }
-    
+
     private String extractOriginalFilenameFromPattern(String storedFilename) {
         // Pattern: evidence_{sightingId}_{uuid}_{originalFilename}
         String[] parts = storedFilename.split("_", 4);
         if (parts.length >= 4) {
             return parts[3]; // The original filename part
         }
-        
+
         // Fallback for old pattern
         String extension = "";
         int lastDot = storedFilename.lastIndexOf('.');
@@ -229,7 +267,7 @@ public class HelloWorldController {
         try {
             Path filePath = Paths.get("uploads/evidence").resolve(filename);
             Resource resource = new UrlResource(filePath.toUri());
-            
+
             if (resource.exists() && resource.isReadable()) {
                 return ResponseEntity.ok()
                     .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + resource.getFilename() + "\"")
