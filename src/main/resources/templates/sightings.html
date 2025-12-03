@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sighting Details</title>
+    
+    <link rel="stylesheet" href="/ufo-app/css/sightings.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+</head>
+<body>
+    <div class="container">
+        <!-- Navigation for different sightings -->
+        <div th:if="${sightings != null and !sightings.isEmpty()}" class="sightings-nav">
+            <h3>All Sightings:</h3>
+            <ul>
+                <li th:each="sighting : ${sightings}">
+                    <a th:href="@{/sightings/{id}(id=${sighting.sightingId})}" 
+                       th:text="${sighting.title}"
+                       th:class="${currentSighting != null and currentSighting.sightingId == sighting.sightingId} ? 'active' : ''">
+                       Sighting Title
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <div th:if="${currentSighting != null}">
+            <h1 class="header-title" th:text="${currentSighting.title}">Sightings Title</h1>
+
+            <div class="profile">
+                <div class="profile-circle" th:text="${reporter != null ? reporter.firstName?.substring(0,1) : 'U'}">P</div>
+                <div>
+                    <div><strong th:text="${reporter != null ? reporter.username : 'Unknown User'}">Username</strong></div>
+                    <div style="color: gray; font-size: 14px;">Reporter</div>
+                </div>
+            </div>
+
+            <div class="meta">
+                <div class="meta-item">📅 <span th:text="${#temporals.format(currentSighting.sightingDate, 'dd/MM/yyyy')}">01/01/25</span></div>
+                <div class="meta-item">⏱️ <span th:text="${currentSighting.durationMinutes}">12</span> minutes</div>
+                <div class="meta-item">📍 <span th:text="${currentSighting.location}">Location</span><br/>
+                    <span th:text="${currentSighting.latitude + ', ' + currentSighting.longitude}">Coordinates</span>
+                </div>
+                <div class="meta-item">🔺 <span th:text="${currentSighting.shape}">Shape</span></div>
+            </div>
+
+            <div id="map" class="map-box" th:data-lat="${currentSighting.latitude}" th:data-lng="${currentSighting.longitude}" th:data-location="${currentSighting.location}">
+                <div class="map-loading">Loading interactive map...</div>
+            </div>
+
+            <h3>Description/Comments</h3>
+            <textarea readonly th:text="${currentSighting.description}">Lorem ipsum dolor sit amet, consectetur adipiscing elit...</textarea>
+
+            <div class="evidence-buttons">
+                <button class="btn">📄 View Evidence</button>
+                <button class="btn">⬆️ Upload Evidence</button>
+            </div>
+
+            <h2>Community Validation</h2>
+            <div>
+                Legitimate: <span th:text="${currentSighting.legitPercentage}">35</span>% &nbsp;&nbsp; 
+                Uncertain: <span th:text="${currentSighting.uncertainPercentage}">55</span>% &nbsp;&nbsp; 
+                Hoax: <span th:text="${currentSighting.hoaxPercentage}">10</span>%
+            </div>
+
+            <div class="validation-bar">
+                <div class="legit" th:style="'width: ' + ${currentSighting.legitPercentage} + '%'"></div>
+                <div class="uncertain" th:style="'width: ' + ${currentSighting.uncertainPercentage} + '%'"></div>
+                <div class="hoax" th:style="'width: ' + ${currentSighting.hoaxPercentage} + '%'"></div>
+            </div>
+
+            <form th:action="@{/sightings/{id}/vote(id=${currentSighting.sightingId})}" method="post" class="validation-buttons">
+                <button type="submit" name="voteType" value="legit" class="vote-btn vote-legit">Legitimate</button>
+                <button type="submit" name="voteType" value="uncertain" class="vote-btn vote-uncertain">Uncertain</button>
+                <button type="submit" name="voteType" value="hoax" class="vote-btn vote-hoax">Hoax</button>
+            </form>
+
+            <h2>Comments</h2>
+            
+            <form th:action="@{/sightings/{id}/comment(id=${currentSighting.sightingId})}" method="post" class="comment-form">
+                <div class="comment-input-section">
+                    <textarea name="commentText" placeholder="Share your thoughts about this sighting..." required></textarea>
+                    <div class="comment-options">
+                        <label>
+                            <input type="checkbox" name="isAnonymous" value="true" />
+                            Post anonymously
+                        </label>
+                        <input type="hidden" name="userId" value="1" /> <!-- For demo purposes, using user ID 1 -->
+                        <button type="submit" class="btn comment-btn">Post Comment</button>
+                    </div>
+                </div>
+            </form>
+
+            <div class="comments-list">
+                <div th:if="${comments != null and !comments.isEmpty()}">
+                    <div th:each="comment : ${comments}" class="comment-item">
+                        <div class="comment-header">
+                            <div class="comment-author">
+                                <span th:if="${!comment.isAnonymous and comment.commenterUsername != null}">
+                                    <strong th:text="${comment.commenterUsername}">Username</strong>
+                                </span>
+                                <span th:if="${comment.isAnonymous or comment.commenterUsername == null}">
+                                    <strong>Anonymous</strong>
+                                </span>
+                            </div>
+                            <div class="comment-date" th:text="${#temporals.format(comment.commentDate, 'dd/MM/yyyy HH:mm')}">Date</div>
+                        </div>
+                        <div class="comment-text" th:text="${comment.commentText}">Comment text</div>
+                    </div>
+                </div>
+                <div th:if="${comments == null or comments.isEmpty()}" class="no-comments">
+                    <p>No comments yet. Be the first to share your thoughts!</p>
+                </div>
+            </div>
+        </div>
+
+        <div th:if="${currentSighting == null}">
+            <h1>No Sightings Available</h1>
+            <p>There are currently no UFO sightings to display.</p>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script th:if="${currentSighting != null}" src="/ufo-app/js/sightings-map.js"></script>
+</body>
+</html>
