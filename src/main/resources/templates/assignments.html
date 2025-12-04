@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="">
 <head>
+    <link rel="stylesheet" href="/ufo-app/css/styles.css" />
     <meta charset="UTF-8">
     <!-- <link rel="stylesheet" th:href="@{/css/style.css}"> -->
     <title>Assignments</title>
@@ -678,6 +679,10 @@
     </style>
 </head>
 <body>
+
+<div style="margin:10px 0 20px 0;">
+    <div th:insert="navbar :: navbar">  </div>
+</div>
 
 <div class="header">
     <h1>UFO Sighting Area Assignments</h1>
