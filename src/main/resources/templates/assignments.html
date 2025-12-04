@@ -1,0 +1,1710 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="">
+<head>
+    <meta charset="UTF-8">
+    <!-- <link rel="stylesheet" th:href="@{/css/style.css}"> -->
+    <title>Assignments</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .header {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 28px;
+        }
+
+        .main-container {
+            display: flex;
+            gap: 0;
+            height: calc(100vh - 140px);
+        }
+
+        /* Kanban Board Columns */
+        .kanban-board {
+            flex: 1;
+            display: flex;
+            gap: 20px;
+            overflow-x: auto;
+            padding-right: 20px;
+        }
+
+        .kanban-column {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            padding: 15px;
+            min-width: 300px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .column-header {
+            padding: 12px;
+            border-bottom: 2px solid #333;
+            margin-bottom: 15px;
+            text-align: center;
+            font-weight: bold;
+            color: #333;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .unassigned-header {
+            border-bottom-color: #666;
+        }
+
+        .pending-header {
+            border-bottom-color: #666;
+        }
+
+        .active-header {
+            border-bottom-color: #666;
+        }
+
+        .cards-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 5px;
+        }
+
+        .card {
+            background: #fafafa;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            padding: 12px;
+            margin-bottom: 10px;
+            cursor: move;
+            transition: all 0.2s ease;
+        }
+
+        .card:hover {
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .card.dragging {
+            opacity: 0.5;
+        }
+
+        .card-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 6px;
+            font-size: 14px;
+        }
+
+        .card-location {
+            color: #666;
+            font-size: 12px;
+            margin-bottom: 6px;
+        }
+
+        .card-priority {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 10px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+        }
+
+        .VERY_HIGH {
+            background: #ff00ae;
+            color: white;
+        }
+
+        .HIGH {
+            background: #ff0000;
+            color: white;
+        }
+
+        .MEDIUM {
+            background: #ffaa00;
+            color: white;
+        }
+
+        .LOW{
+            background: #00ff0d;
+            color: white;
+        }
+
+        .card-assignee {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid #e0e0e0;
+            font-size: 11px;
+            color: #000000;
+            flex-wrap: wrap;
+        }
+
+        .assignee-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #666;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 10px;
+            margin-left: 3px;
+        }
+
+        /* Right Sidebar */
+        .sidebar {
+            width: 280px;
+            background: white;
+            border-left: 2px solid #e0e0e0;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .sidebar h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 16px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .team-member-card {
+            background: #fafafa;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            padding: 12px;
+            margin-bottom: 12px;
+            transition: all 0.2s ease;
+        }
+
+        .team-member-card:hover {
+            background: white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        }
+
+        .member-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .member-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #666;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .member-info {
+            flex: 1;
+        }
+
+        .member-username {
+            font-weight: 600;
+            color: #333;
+            font-size: 13px;
+        }
+
+        .member-role {
+            color: #666;
+            font-size: 11px;
+        }
+
+        .member-assignments {
+            background: white;
+            border: 1px solid #e0e0e0;
+            padding: 6px 8px;
+            border-radius: 3px;
+            font-size: 11px;
+            color: #666;
+        }
+
+        .assignment-count {
+            display: inline-block;
+            background: #333;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-weight: 600;
+            margin-left: 5px;
+            font-size: 10px;
+        }
+
+        /* Drag and Drop States */
+        .cards-container.drag-over {
+            background: #f0f0f0;
+            border: 2px dashed #999;
+            border-radius: 4px;
+        }
+
+        /* Notification styles */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 10000;
+            opacity: 0;
+            transform: translateX(400px);
+            transition: all 0.3s ease;
+        }
+
+        .notification.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .notification-success {
+            background: #4caf50;
+        }
+
+        .notification-error {
+            background: #f44336;
+        }
+
+        .notification-info {
+            background: #2196f3;
+        }
+
+        /* Scrollbar Styling */
+        .cards-container::-webkit-scrollbar,
+        .sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .cards-container::-webkit-scrollbar-track,
+        .sidebar::-webkit-scrollbar-track {
+            background: #f5f5f5;
+        }
+
+        .cards-container::-webkit-scrollbar-thumb,
+        .sidebar::-webkit-scrollbar-thumb {
+            background: #ccc;
+            border-radius: 3px;
+        }
+
+        .cards-container::-webkit-scrollbar-thumb:hover,
+        .sidebar::-webkit-scrollbar-thumb:hover {
+            background: #999;
+        }
+
+        .card-date {
+            font-size: 10px;
+            color: #999;
+            margin-top: 4px;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 30px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #333;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-size: 20px;
+            color: #333;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 28px;
+            color: #666;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close-btn:hover {
+            color: #333;
+        }
+
+        /* Assign Modal Specific Styles */
+        .assign-modal-body {
+            padding: 20px 0;
+        }
+
+        .team-members-list {
+            max-height: 400px;
+            overflow-y: auto;
+            margin: 20px 0;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 10px;
+        }
+
+        .team-member-checkbox {
+            margin-bottom: 10px;
+        }
+
+        .team-member-checkbox label {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .team-member-checkbox label:hover {
+            background: #f5f5f5;
+        }
+
+        .team-member-checkbox input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .member-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+        }
+
+        .member-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #666;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .member-details {
+            flex: 1;
+        }
+
+        .member-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 3px;
+        }
+
+        .member-username {
+            font-size: 13px;
+            color: #666;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .btn-cancel, .btn-confirm {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-cancel {
+            background: #f0f0f0;
+            color: #666;
+        }
+
+        .btn-cancel:hover {
+            background: #e0e0e0;
+        }
+
+        .btn-confirm {
+            background: #4caf50;
+            color: white;
+        }
+
+        .btn-confirm:hover {
+            background: #45a049;
+        }
+
+        .btn-confirm:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+        }
+
+        .user-info-section {
+            background: #fafafa;
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+
+        .user-info-section h3 {
+            margin: 0 0 10px 0;
+            font-size: 16px;
+            color: #333;
+        }
+
+        .user-info-item {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .assignments-section h3 {
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .assignment-item {
+            background: #fafafa;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 12px;
+        }
+
+        .assignment-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .assignment-area-name {
+            font-weight: 600;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .assignment-status {
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-active {
+            background: #333;
+            color: white;
+        }
+
+        .status-pending {
+            background: #999;
+            color: white;
+        }
+
+        .assignment-detail {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .no-assignments {
+            text-align: center;
+            padding: 20px;
+            color: #999;
+            font-style: italic;
+        }
+
+        .team-member-card {
+            cursor: pointer;
+        }
+
+        .team-member-card.dragging {
+            opacity: 0.5;
+            cursor: move;
+        }
+
+        /* Card Modal Styles */
+        .card-modal-body {
+            padding: 20px 0;
+        }
+
+        .card-detail-section {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .priority-selector {
+            margin-top: 15px;
+        }
+
+        .priority-selector label {
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .priority-selector select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .assigned-users-section {
+            margin-bottom: 25px;
+        }
+
+        .assigned-user-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px;
+            background: #f9f9f9;
+            border-radius: 6px;
+            margin-bottom: 10px;
+        }
+
+        .assigned-user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .assigned-user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #666;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 13px;
+        }
+
+        .remove-user-btn {
+            background: #f44336;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .remove-user-btn:hover {
+            background: #d32f2f;
+        }
+
+        .add-user-section select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>UFO Sighting Area Assignments</h1>
+</div>
+
+<div class="main-container">
+    <!-- Kanban Board -->
+    <div class="kanban-board">
+        <!-- Unassigned Column -->
+        <div class="kanban-column">
+            <div class="column-header unassigned-header" th:text="'📋 Unassigned (' + ${#lists.size(unassignedAreas)} + ')'">
+                📋 Unassigned (0)
+            </div>
+            <div class="cards-container" id="unassigned">
+                <div class="card" draggable="true" th:each="area : ${unassignedAreas}" 
+                     th:attr="data-area-id=${area.areaId}">
+                    <div class="card-title" th:text="${area.areaName}">Area Name</div>
+                    <div class="card-location" th:text="'📍 ' + ${area.description}">📍 Description</div>
+                    <span class="card-priority" 
+                          th:class="${'card-priority ' + (#strings.toString(area.areaPriority))}"
+                          th:text="${#strings.replace(area.areaPriority, '_', ' ')}">
+                        PRIORITY
+                    </span>
+                </div>
+ 
+            </div>
+        </div>
+
+        <!-- Assignment Pending Column -->
+        <div class="kanban-column">
+            <div class="column-header pending-header" th:text="'⏳ Assignment Pending (' + ${#maps.size(pendingByArea)} + ')'">
+                ⏳ Assignment Pending (0)
+            </div>
+            <div class="cards-container" id="pending">
+                <div class="card" draggable="true" th:each="entry : ${pendingByArea}"
+                     th:attr="data-area-id=${entry.value[0].area.areaId}">
+                    <div class="card-title" th:text="${entry.value[0].area.areaName}">Area Name</div>
+                    <div class="card-location" th:text="'📍 ' + ${entry.value[0].area.description}">📍 Description</div>
+                    <span class="card-priority" 
+                          th:class="${'card-priority ' + (#strings.toString(entry.value[0].area.areaPriority))}"
+                          th:text="${#strings.replace(entry.value[0].area.areaPriority, '_', ' ')}">
+                        PRIORITY
+                    </span>
+                    <div class="card-assignee">
+                        <span>Assigned to:</span>
+                        <span th:each="assignment, iterStat : ${entry.value}">
+                            <div class="assignee-icon" th:text="${#strings.substring(assignment.user.firstName, 0, 1) + #strings.substring(assignment.user.secondName, 0, 1)}">XX</div>
+                        </span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Active Observation Column -->
+        <div class="kanban-column">
+            <div class="column-header active-header" th:text="'👁️ Active Observation (' + ${#maps.size(activeByArea)} + ')'">
+                👁️ Active Observation (0)
+            </div>
+            <div class="cards-container" id="active">
+                <div class="card" draggable="true" th:each="entry : ${activeByArea}"
+                     th:attr="data-area-id=${entry.value[0].area.areaId}">
+                    <div class="card-title" th:text="${entry.value[0].area.areaName}">Area Name</div>
+                    <div class="card-location" th:text="'📍 ' + ${entry.value[0].area.description}">📍 Description</div>
+                    <span class="card-priority" 
+                        th:class="${'card-priority ' + (#strings.toString(entry.value[0].area.areaPriority))}"
+                        th:text="${#strings.replace(entry.value[0].area.areaPriority, '_', ' ')}">
+                        PRIORITY
+                    </span>
+                    <div class="card-assignee">
+                        <span>Assigned to:</span>
+                        <span th:each="assignment, iterStat : ${entry.value}">
+                            <div class="assignee-icon" th:text="${#strings.substring(assignment.user.firstName, 0, 1) + #strings.substring(assignment.user.secondName, 0, 1)}">XX</div>
+                        </span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Team Members Sidebar -->
+    <div class="sidebar">
+        <h2>👥 Team Members</h2>
+
+        <div class="team-member-card" 
+             draggable="true"
+             th:each="user : ${users}" 
+             th:onclick="'showUserDetails(' + ${user.userId} + ')'"
+             th:attr="data-user-id=${user.userId},
+                      data-username=${user.username},
+                      data-firstname=${user.firstName},
+                      data-lastname=${user.secondName},
+                      data-role=${user.role},
+                      data-email=${user.email}">
+            <div class="member-header">
+                <div class="member-icon" th:text="${#strings.substring(user.firstName, 0, 1) + #strings.substring(user.secondName, 0, 1)}">AB</div>
+                <div class="member-info">
+                    <div class="member-username" th:text="${user.username}">Username</div>
+                    <div class="member-role" th:text="${#strings.capitalize(#strings.toLowerCase(#strings.replace(user.role, '_', ' ')))}">Role</div>
+                </div>
+            </div>
+            <div class="member-assignments">
+                Active: <span class="assignment-count" th:text="${assignmentCounts[user.userId] != null ? assignmentCounts[user.userId] : 0}">0</span>
+            </div>
+            
+            <!-- Hidden data for modal -->
+            <div style="display:none;" th:attr="data-assignments-for=${user.userId}">
+                <div th:each="assignment : ${userAssignments[user.userId]}" class="assignment-data"
+                     th:attr="data-area-name=${assignment.area.areaName},
+                              data-area-desc=${assignment.area.description},
+                              data-area-priority=${assignment.area.areaPriority},
+                              data-status=${assignment.status},
+                              data-assigned-date=${assignment.assignedAt}">
+                </div>
+            </div>
+        </div>
+
+        <div th:if="${users == null or #lists.isEmpty(users)}" style="text-align: center; padding: 20px; color: #999;">
+            No team members found
+        </div>
+    </div>
+</div>
+
+<!-- User Details Modal -->
+<div id="userModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="modalTitle">User Details</h2>
+            <button class="close-btn" onclick="closeModal()">&times;</button>
+        </div>
+        
+        <div class="user-info-section">
+            <h3>Team Member Information</h3>
+            <div class="user-info-item"><strong>Username:</strong> <span id="modalUsername"></span></div>
+            <div class="user-info-item"><strong>Name:</strong> <span id="modalFullName"></span></div>
+            <div class="user-info-item"><strong>Email:</strong> <span id="modalEmail"></span></div>
+            <div class="user-info-item"><strong>Role:</strong> <span id="modalRole"></span></div>
+        </div>
+
+        <div class="assignments-section">
+            <h3>Area Assignments (<span id="assignmentCount">0</span>)</h3>
+            <div id="assignmentsContainer"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Assign Team Members Modal -->
+<div id="assignModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="assignModalTitle">Assign Team Members</h2>
+            <button class="close-btn" onclick="closeAssignModal()">&times;</button>
+        </div>
+        
+        <div class="assign-modal-body">
+            <p style="margin-bottom: 15px; color: #666;">
+                Select one or more team members to assign to <strong id="assignAreaName"></strong>
+            </p>
+            
+            <div class="team-members-list">
+                <div class="team-member-checkbox" th:each="user : ${users}">
+                    <label>
+                        <input type="checkbox" 
+                               th:value="${user.userId}"
+                               th:id="'assign-user-' + ${user.userId}"
+                               class="assign-checkbox">
+                        <div class="member-info">
+                            <div class="member-avatar" 
+                                 th:text="${#strings.substring(user.firstName, 0, 1) + #strings.substring(user.secondName, 0, 1)}">
+                                XX
+                            </div>
+                            <div class="member-details">
+                                <div class="member-name" th:text="${user.firstName + ' ' + user.secondName}">Name</div>
+                                <div class="member-username" th:text="'@' + ${user.username}">@username</div>
+                            </div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+            
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeAssignModal()">Cancel</button>
+                <button class="btn-confirm" onclick="confirmAssignment()">Assign Selected</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Card Details Modal -->
+<div id="cardModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="cardModalTitle">Area Details</h2>
+            <button class="close-btn" onclick="closeCardModal()">&times;</button>
+        </div>
+        
+        <div class="card-modal-body">
+            <div class="card-detail-section">
+                <h3 id="cardAreaName">Area Name</h3>
+                <p id="cardDescription" style="color: #666; margin-bottom: 20px;">Description</p>
+                
+                <div class="priority-selector">
+                    <label><strong>Priority Level:</strong></label>
+                    <select id="cardPrioritySelect" onchange="updateCardPriority()">
+                        <option value="LOW">Low</option>
+                        <option value="MEDIUM">Medium</option>
+                        <option value="HIGH">High</option>
+                        <option value="VERY_HIGH">Very High</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="assigned-users-section">
+                <h3>Assigned Team Members (<span id="cardAssignedCount">0</span>)</h3>
+                <div id="cardAssignedUsers"></div>
+            </div>
+
+            <div class="add-user-section">
+                <h3>Add Team Member</h3>
+                <select id="cardAddUserSelect">
+                    <option value="">-- Select a user to add --</option>
+                    <option th:each="user : ${users}" 
+                            th:value="${user.userId}"
+                            th:text="${user.firstName + ' ' + user.secondName + ' (@' + user.username + ')'}">
+                        User Name
+                    </option>
+                </select>
+                <button class="btn-confirm" onclick="addUserFromCardModal()" style="margin-top: 10px;">Add Selected User</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Modal Functions
+    async function showUserDetails(userId) {
+        const card = document.querySelector(`[data-user-id="${userId}"]`);
+        
+        // Populate user info from card data
+        document.getElementById('modalUsername').textContent = card.dataset.username;
+        document.getElementById('modalFullName').textContent = card.dataset.firstname + ' ' + card.dataset.lastname;
+        document.getElementById('modalEmail').textContent = card.dataset.email;
+        document.getElementById('modalRole').textContent = formatRole(card.dataset.role);
+        document.getElementById('modalTitle').textContent = card.dataset.firstname + ' ' + card.dataset.lastname;
+        
+        // Show loading state
+        const container = document.getElementById('assignmentsContainer');
+        container.innerHTML = '<div style="text-align: center; padding: 20px; color: #666;">Loading assignments...</div>';
+        document.getElementById('assignmentCount').textContent = '...';
+        
+        // Open modal immediately with loading state
+        document.getElementById('userModal').classList.add('show');
+        
+        try {
+            // Fetch fresh assignment data from server
+            const response = await fetch(`/ufo-app/api/user-assignments/${userId}`);
+            if (!response.ok) {
+                throw new Error('Failed to fetch assignments');
+            }
+            
+            const assignments = await response.json();
+            
+            // Populate assignments with fresh data
+            container.innerHTML = '';
+            
+            if (assignments.length === 0) {
+                container.innerHTML = '<div class="no-assignments">No active assignments</div>';
+                document.getElementById('assignmentCount').textContent = '0';
+            } else {
+                document.getElementById('assignmentCount').textContent = assignments.length;
+                
+                assignments.forEach(assignment => {
+                    const item = document.createElement('div');
+                    item.className = 'assignment-item';
+                    
+                    const statusClass = assignment.status.toLowerCase() === 'active' ? 'status-active' : 'status-pending';
+                    
+                    item.innerHTML = `
+                    <div class="assignment-item-header">
+                        <div class="assignment-area-name">${assignment.area.areaName}</div>
+                        <div class="assignment-status ${statusClass}">${assignment.status}</div>
+                    </div>
+                    <div class="assignment-detail"><strong>Description:</strong> ${assignment.area.description}</div>
+                    <div class="assignment-detail"><strong>Priority:</strong> ${formatPriority(assignment.area.areaPriority)}</div>
+                    <div class="assignment-detail"><strong>Assigned Date:</strong> ${assignment.assignedAt}</div>
+                `;
+                
+                container.appendChild(item);
+            });
+        }
+        } catch (error) {
+            console.error('Error fetching user assignments:', error);
+            container.innerHTML = '<div class="no-assignments" style="color: red;">Error loading assignments</div>';
+            document.getElementById('assignmentCount').textContent = '0';
+        }
+    }
+
+    function closeModal() {
+        document.getElementById('userModal').classList.remove('show');
+    }
+
+    function formatRole(role) {
+        return role.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+    }
+
+    function formatPriority(priority) {
+        return priority.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+    }
+
+    // Card Details Modal Functions
+    let currentCardAreaId = null;
+    let currentCardColumn = null;
+
+    async function openCardModal(areaId, columnId) {
+        currentCardAreaId = areaId;
+        currentCardColumn = columnId;
+        
+        try {
+            const response = await fetch(`/ufo-app/api/area-details/${areaId}`);
+            if (!response.ok) throw new Error('Failed to fetch area details');
+            
+            const areaData = await response.json();
+            
+            // Populate modal
+            document.getElementById('cardModalTitle').textContent = `${areaData.areaName} Details`;
+            document.getElementById('cardAreaName').textContent = areaData.areaName;
+            document.getElementById('cardDescription').textContent = areaData.description;
+            document.getElementById('cardPrioritySelect').value = areaData.priority;
+            document.getElementById('cardAssignedCount').textContent = areaData.assignedUsers.length;
+            
+            // Populate assigned users
+            const usersContainer = document.getElementById('cardAssignedUsers');
+            usersContainer.innerHTML = '';
+            
+            if (areaData.assignedUsers.length === 0) {
+                usersContainer.innerHTML = '<p style="color: #999; text-align: center; padding: 20px;">No users assigned</p>';
+            } else {
+                areaData.assignedUsers.forEach(user => {
+                    const userItem = document.createElement('div');
+                    userItem.className = 'assigned-user-item';
+                    userItem.innerHTML = `
+                        <div class="assigned-user-info">
+                            <div class="assigned-user-avatar">${user.firstName.substring(0,1)}${user.secondName.substring(0,1)}</div>
+                            <div>
+                                <div style="font-weight: 600;">${user.firstName} ${user.secondName}</div>
+                                <div style="font-size: 13px; color: #666;">@${user.username}</div>
+                            </div>
+                        </div>
+                        <button class="remove-user-btn" onclick="removeUserFromCard(${user.userId}, '${user.username}')">Remove</button>
+                    `;
+                    usersContainer.appendChild(userItem);
+                });
+            }
+            
+            // Update add user dropdown - exclude already assigned users
+            const selectElement = document.getElementById('cardAddUserSelect');
+            const assignedUserIds = areaData.assignedUsers.map(u => u.userId.toString());
+            
+            // Enable/disable options based on whether user is already assigned
+            Array.from(selectElement.options).forEach(option => {
+                if (option.value === '') return; // Skip the placeholder option
+                
+                if (assignedUserIds.includes(option.value)) {
+                    option.disabled = true;
+                    option.style.color = '#ccc';
+                } else {
+                    option.disabled = false;
+                    option.style.color = '';
+                }
+            });
+            
+            selectElement.value = '';
+            
+            document.getElementById('cardModal').classList.add('show');
+        } catch (error) {
+            showNotification('Error loading card details', 'error');
+        }
+    }
+
+    function closeCardModal() {
+        currentCardAreaId = null;
+        currentCardColumn = null;
+        document.getElementById('cardModal').classList.remove('show');
+    }
+
+    async function removeUserFromCard(userId, username) {
+        if (!currentCardAreaId) return;
+        
+        try {
+            const response = await fetch('/ufo-app/api/remove-user-from-area', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                body: `userId=${userId}&areaId=${currentCardAreaId}`
+            });
+            
+            if (response.ok) {
+                showNotification(`Removed ${username} from area`, 'success');
+                
+                // Update card UI immediately by fetching fresh data
+                const card = document.querySelector(`[data-area-id="${currentCardAreaId}"]`);
+                if (card) {
+                    // Fetch fresh area data
+                    const areaResponse = await fetch(`/ufo-app/api/area-details/${currentCardAreaId}`);
+                    const areaData = await areaResponse.json();
+                    
+                    if (areaData.assignedUsers.length === 0) {
+                        // No users left - remove entire assignee section
+                        removeAssigneesFromCard(card);
+                    } else {
+                        // Rebuild assignee section with remaining users
+                        const assigneeDiv = card.querySelector('.card-assignee');
+                        if (assigneeDiv) {
+                            // Clear and rebuild
+                            assigneeDiv.innerHTML = '';
+                            
+                            const label = document.createElement('span');
+                            label.textContent = 'Assigned to:';
+                            assigneeDiv.appendChild(label);
+                            
+                            areaData.assignedUsers.forEach(user => {
+                                const iconSpan = document.createElement('span');
+                                const iconDiv = document.createElement('div');
+                                iconDiv.className = 'assignee-icon';
+                                iconDiv.textContent = user.firstName.substring(0,1) + user.secondName.substring(0,1);
+                                iconSpan.appendChild(iconDiv);
+                                assigneeDiv.appendChild(iconSpan);
+                            });
+                        }
+                    }
+                }
+                
+                // Refresh modal
+                await openCardModal(currentCardAreaId, currentCardColumn);
+                
+                // Update sidebar counts
+                updateSidebarCounts();
+                
+            } else {
+                showNotification('Failed to remove user', 'error');
+            }
+        } catch (error) {
+            showNotification('Network error', 'error');
+        }
+    }
+
+    async function addUserFromCardModal() {
+        if (!currentCardAreaId) return;
+        
+        const selectElement = document.getElementById('cardAddUserSelect');
+        const userId = selectElement.value;
+        
+        if (!userId) {
+            showNotification('Please select a user to add', 'error');
+            return;
+        }
+        
+        const username = selectElement.options[selectElement.selectedIndex].text;
+        const status = currentCardColumn === 'unassigned' ? 'PENDING' : currentCardColumn.toUpperCase();
+        
+        try {
+            const response = await fetch('/ufo-app/api/add-user-to-area', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                body: `userId=${userId}&areaId=${currentCardAreaId}&status=${status}`
+            });
+            
+            const responseText = await response.text();
+            
+            if (response.ok) {
+                if (responseText === 'ALREADY_ASSIGNED') {
+                    showNotification('User already assigned to this area', 'info');
+                } else {
+                    showNotification(`Added ${username.split('(')[0].trim()} to area`, 'success');
+                    
+                    // Update card UI immediately
+                    const card = document.querySelector(`[data-area-id="${currentCardAreaId}"]`);
+                    if (card) {
+                        // Fetch fresh area data
+                        const areaResponse = await fetch(`/ufo-app/api/area-details/${currentCardAreaId}`);
+                        const areaData = await areaResponse.json();
+                        
+                        // Rebuild assignee section with all users
+                        let assigneeDiv = card.querySelector('.card-assignee');
+                        if (!assigneeDiv) {
+                            assigneeDiv = document.createElement('div');
+                            assigneeDiv.className = 'card-assignee';
+                            card.appendChild(assigneeDiv);
+                        }
+                        
+                        assigneeDiv.innerHTML = '';
+                        const label = document.createElement('span');
+                        label.textContent = 'Assigned to:';
+                        assigneeDiv.appendChild(label);
+                        
+                        areaData.assignedUsers.forEach(user => {
+                            const iconSpan = document.createElement('span');
+                            const iconDiv = document.createElement('div');
+                            iconDiv.className = 'assignee-icon';
+                            iconDiv.textContent = user.firstName.substring(0,1) + user.secondName.substring(0,1);
+                            iconSpan.appendChild(iconDiv);
+                            assigneeDiv.appendChild(iconSpan);
+                        });
+                    }
+                    
+                    // Refresh modal
+                    await openCardModal(currentCardAreaId, currentCardColumn);
+                    
+                    // Update sidebar counts
+                    updateSidebarCounts();
+                }
+            } else {
+                showNotification('Failed to add user', 'error');
+            }
+        } catch (error) {
+            showNotification('Network error', 'error');
+        }
+    }
+
+    async function updateCardPriority() {
+        if (!currentCardAreaId) return;
+        
+        const priority = document.getElementById('cardPrioritySelect').value;
+        
+        try {
+            const response = await fetch('/ufo-app/api/update-area-priority', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                body: `areaId=${currentCardAreaId}&priority=${priority}`
+            });
+            
+            if (response.ok) {
+                showNotification('Priority updated successfully', 'success');
+                
+                // Update card priority badge
+                const card = document.querySelector(`[data-area-id="${currentCardAreaId}"]`);
+                if (card) {
+                    const priorityBadge = card.querySelector('.card-priority');
+                    if (priorityBadge) {
+                        priorityBadge.textContent = priority.replace('_', ' ');
+                        // Update CSS class
+                        priorityBadge.className = 'card-priority ' + priority;
+                    }
+                }
+            } else {
+                showNotification('Failed to update priority', 'error');
+            }
+        } catch (error) {
+            showNotification('Network error', 'error');
+        }
+    }
+
+    // Close modals when clicking outside
+    window.onclick = function(event) {
+        const userModal = document.getElementById('userModal');
+        const assignModal = document.getElementById('assignModal');
+        const cardModal = document.getElementById('cardModal');
+        
+        if (event.target === userModal) {
+            closeModal();
+        }
+        if (event.target === assignModal) {
+            closeAssignModal();
+        }
+        if (event.target === cardModal) {
+            closeCardModal();
+        }
+    }
+
+    // Close modals on Escape key
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            const userModal = document.getElementById('userModal');
+            const assignModal = document.getElementById('assignModal');
+            const cardModal = document.getElementById('cardModal');
+            
+            if (userModal.classList.contains('show')) {
+                closeModal();
+            }
+            if (assignModal.classList.contains('show')) {
+                closeAssignModal();
+            }
+            if (cardModal.classList.contains('show')) {
+                closeCardModal();
+            }
+        }
+    });
+
+    // Drag and Drop Functionality
+    let draggedElement = null;
+    let draggedType = null; // 'card' or 'user'
+    let isDragging = false;
+
+    // Get all cards and team members
+    const cards = document.querySelectorAll('.card');
+    const containers = document.querySelectorAll('.cards-container');
+    const teamMembers = document.querySelectorAll('.team-member-card');
+
+    // Add drag start event to all cards
+    cards.forEach(card => {
+        card.addEventListener('dragstart', function(e) {
+            draggedElement = this;
+            draggedType = 'card';
+            isDragging = true;
+            this.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+        });
+
+        card.addEventListener('dragend', function(e) {
+            this.classList.remove('dragging');
+            draggedElement = null;
+            draggedType = null;
+            // Reset dragging flag after a short delay to avoid click trigger
+            setTimeout(() => { isDragging = false; }, 100);
+        });
+
+        // Add click handler to open modal (only if not dragging)
+        card.addEventListener('click', function(e) {
+            if (!isDragging) {
+                const areaId = this.getAttribute('data-area-id');
+                const columnId = this.parentElement.id;
+                openCardModal(areaId, columnId);
+            }
+        });
+    });
+
+    // Add drag start event to all team members
+    teamMembers.forEach(member => {
+        member.addEventListener('dragstart', function(e) {
+            draggedElement = this;
+            draggedType = 'user';
+            this.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'copy';
+            e.stopPropagation(); // Prevent card click from triggering
+        });
+
+        member.addEventListener('dragend', function(e) {
+            this.classList.remove('dragging');
+            draggedElement = null;
+            draggedType = null;
+        });
+    });
+
+    // Add events to containers
+    containers.forEach(container => {
+        container.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            this.classList.add('drag-over');
+            e.dataTransfer.dropEffect = 'move';
+        });
+
+        container.addEventListener('dragleave', function(e) {
+            this.classList.remove('drag-over');
+        });
+
+        container.addEventListener('drop', async function(e) {
+            e.preventDefault();
+            this.classList.remove('drag-over');
+            
+            if (draggedElement) {
+                // IMPORTANT: Save reference before async operation
+                // draggedElement becomes null after dragend event fires
+                const cardElement = draggedElement;
+                const targetContainer = this;
+                
+                const areaId = cardElement.getAttribute('data-area-id');
+                const areaName = cardElement.querySelector('.card-title').textContent;
+                const sourceColumn = cardElement.parentElement.id; // Where it came from
+                const targetColumn = targetContainer.id; // 'unassigned', 'pending', or 'active'
+                
+                // Show loading state
+                cardElement.style.opacity = '0.5';
+                cardElement.style.pointerEvents = 'none';
+                
+                // SPECIAL CASE: Coming from unassigned to pending/active
+                if (sourceColumn === 'unassigned' && (targetColumn === 'pending' || targetColumn === 'active')) {
+                    showAssignModal(areaId, areaName, targetColumn, cardElement, targetContainer);
+                    return; // Don't proceed with normal update
+                }
+                
+                // Normal case: Update existing assignment status
+                try{
+                    const url = '/ufo-app/api/update-assignment-status';
+                    const body = `areaId=${areaId}&targetColumn=${targetColumn}`;
+                    
+                    // Call API to update database
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: body
+                    });
+                    
+                    const responseText = await response.text();
+                    
+                    if (response.ok) {
+                        // Update card UI based on target column
+                        if (targetColumn === 'unassigned') {
+                            // Remove assignee icons when moving to unassigned
+                            removeAssigneesFromCard(cardElement);
+                        }
+                        // Note: When moving between pending/active, assignees stay the same
+                        
+                        // Success - move the card visually
+                        targetContainer.appendChild(cardElement);
+                        updateColumnCounts();
+                        
+                        // Update sidebar counts
+                        updateSidebarCounts();
+                        
+                        // Show success notification
+                        showNotification('Assignment updated successfully!', 'success');
+                        
+                        // Reset card state
+                        cardElement.style.opacity = '1';
+                        cardElement.style.pointerEvents = 'auto';
+                        
+                    } else {
+                        // Error - show message and don't move card
+                        showNotification('Failed to update: ' + responseText, 'error');
+                        cardElement.style.opacity = '1';
+                        cardElement.style.pointerEvents = 'auto';
+                    }
+                } catch (error) {
+                    showNotification('Network error: ' + error.message, 'error');
+                    cardElement.style.opacity = '1';
+                    cardElement.style.pointerEvents = 'auto';
+                }
+            }
+        });
+    });
+
+    // Add drop event to cards to accept user drops
+    cards.forEach(card => {
+        card.addEventListener('dragover', function(e) {
+            // Only accept user drops on cards
+            if (draggedType === 'user') {
+                e.preventDefault();
+                e.stopPropagation();
+                this.style.outline = '2px dashed #4caf50';
+                e.dataTransfer.dropEffect = 'copy';
+            }
+        });
+
+        card.addEventListener('dragleave', function(e) {
+            this.style.outline = '';
+        });
+
+        card.addEventListener('drop', async function(e) {
+            // Only handle user drops
+            if (draggedType === 'user') {
+                e.preventDefault();
+                e.stopPropagation();
+                this.style.outline = '';
+                
+                const userId = draggedElement.getAttribute('data-user-id');
+                const username = draggedElement.getAttribute('data-username');
+                const firstname = draggedElement.getAttribute('data-firstname');
+                const lastname = draggedElement.getAttribute('data-lastname');
+                const areaId = this.getAttribute('data-area-id');
+                const areaName = this.querySelector('.card-title').textContent;
+                const sourceColumn = this.parentElement.id;
+                
+                try {
+                    let targetStatus = sourceColumn === 'unassigned' ? 'PENDING' : sourceColumn.toUpperCase();
+                    
+                    const url = '/ufo-app/api/add-user-to-area';
+                    const body = `userId=${userId}&areaId=${areaId}&status=${targetStatus}`;
+                    
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: body
+                    });
+                    
+                    const responseText = await response.text();
+                    
+                    if (response.ok) {
+                        // Check if already assigned
+                        if (responseText === 'ALREADY_ASSIGNED') {
+                            showNotification(`${username} is already assigned to ${areaName}`, 'info');
+                            return;
+                        }
+                        
+                        // Add user icon to card
+                        const userInitials = firstname.substring(0, 1) + lastname.substring(0, 1);
+                        addSingleAssigneeToCard(this, { id: userId, name: `${firstname} ${lastname}`, avatar: userInitials });
+                        
+                        // If dropped on unassigned, move card to pending
+                        if (sourceColumn === 'unassigned') {
+                            const pendingContainer = document.getElementById('pending');
+                            pendingContainer.appendChild(this);
+                            updateColumnCounts();
+                        }
+                        
+                        // Update sidebar counts
+                        updateSidebarCounts();
+                        
+                        showNotification(`Assigned ${username} to ${areaName}!`, 'success');
+                    } else {
+                        showNotification('Failed to assign: ' + responseText, 'error');
+                    }
+                } catch (error) {
+                    showNotification('Network error: ' + error.message, 'error');
+                }
+            }
+        });
+    });
+
+    // Update column counts
+    function updateColumnCounts() {
+        const unassignedCount = document.getElementById('unassigned').children.length;
+        const pendingCount = document.getElementById('pending').children.length;
+        const activeCount = document.getElementById('active').children.length;
+
+        document.querySelector('.unassigned-header').textContent = `📋 Unassigned (${unassignedCount})`;
+        document.querySelector('.pending-header').textContent = `⏳ Assignment Pending (${pendingCount})`;
+        document.querySelector('.active-header').textContent = `👁️ Active Observation (${activeCount})`;
+    }
+
+    // Initialize counts
+    updateColumnCounts();
+
+    // Notification system
+    function showNotification(message, type) {
+        // Remove existing notification if any
+        const existingNotification = document.querySelector('.notification');
+        if (existingNotification) {
+            existingNotification.remove();
+        }
+        
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = `notification notification-${type}`;
+        notification.textContent = message;
+        
+        // Add to document
+        document.body.appendChild(notification);
+        
+        // Trigger animation
+        setTimeout(() => notification.classList.add('show'), 10);
+        
+        // Remove after 3 seconds
+        setTimeout(() => {
+            notification.classList.remove('show');
+            setTimeout(() => notification.remove(), 300);
+        }, 3000);
+    }
+
+    // Function to update sidebar assignment counts
+    async function updateSidebarCounts() {
+        try {
+            // Fetch updated assignment counts from server
+            const response = await fetch('/ufo-app/api/assignment-counts');
+            if (!response.ok) {
+                console.error('Failed to fetch assignment counts');
+                return;
+            }
+            
+            const counts = await response.json();
+            
+            // Update each user's assignment count in the sidebar
+            Object.entries(counts).forEach(([userId, count]) => {
+                const badge = document.querySelector(`[data-user-id="${userId}"] .assignment-count`);
+                if (badge) {
+                    badge.textContent = count;
+                }
+            });
+            
+        } catch (error) {
+            console.error('Error updating sidebar counts:', error);
+        }
+    }
+
+    // Helper function to remove assignees from a card (when moving to unassigned)
+    function removeAssigneesFromCard(cardElement) {
+        const assigneeSection = cardElement.querySelector('.card-assignee');
+        if (assigneeSection) {
+            assigneeSection.remove();
+        }
+    }
+
+    // Helper function to add assignees to a card (when assigning users)
+    function addAssigneesToCard(cardElement, users) {
+        // Remove existing assignee section if any
+        const existingAssignee = cardElement.querySelector('.card-assignee');
+        if (existingAssignee) {
+            existingAssignee.remove();
+        }
+        
+        // Create new assignee section
+        const assigneeDiv = document.createElement('div');
+        assigneeDiv.className = 'card-assignee';
+        
+        const label = document.createElement('span');
+        label.textContent = 'Assigned to:';
+        assigneeDiv.appendChild(label);
+        
+        // Add each user icon
+        users.forEach(user => {
+            const iconSpan = document.createElement('span');
+            const iconDiv = document.createElement('div');
+            iconDiv.className = 'assignee-icon';
+            iconDiv.textContent = user.avatar;
+            iconSpan.appendChild(iconDiv);
+            assigneeDiv.appendChild(iconSpan);
+        });
+        
+        // Append to card
+        cardElement.appendChild(assigneeDiv);
+    }
+
+    // Helper function to add a single user to a card (when dragging user to card)
+    function addSingleAssigneeToCard(cardElement, user) {
+        let assigneeDiv = cardElement.querySelector('.card-assignee');
+        
+        // If no assignee section exists, create it
+        if (!assigneeDiv) {
+            assigneeDiv = document.createElement('div');
+            assigneeDiv.className = 'card-assignee';
+            
+            const label = document.createElement('span');
+            label.textContent = 'Assigned to:';
+            assigneeDiv.appendChild(label);
+            
+            cardElement.appendChild(assigneeDiv);
+        }
+        
+        // Add the new user icon
+        const iconSpan = document.createElement('span');
+        const iconDiv = document.createElement('div');
+        iconDiv.className = 'assignee-icon';
+        iconDiv.textContent = user.avatar;
+        iconSpan.appendChild(iconDiv);
+        assigneeDiv.appendChild(iconSpan);
+    }
+
+    // Assignment Modal Functions
+    let pendingAssignment = null; // Stores {areaId, areaName, targetColumn, cardElement, targetContainer}
+
+    function showAssignModal(areaId, areaName, targetColumn, cardElement, targetContainer) {
+        pendingAssignment = { areaId, areaName, targetColumn, cardElement, targetContainer };
+        
+        document.getElementById('assignAreaName').textContent = areaName;
+        document.getElementById('assignModalTitle').textContent = 'Assign Team Members to ' + areaName;
+        
+        // Clear all checkboxes
+        document.querySelectorAll('.assign-checkbox').forEach(cb => cb.checked = false);
+        
+        document.getElementById('assignModal').classList.add('show');
+    }
+
+    function closeAssignModal() {
+        // Reset card state
+        if (pendingAssignment && pendingAssignment.cardElement) {
+            pendingAssignment.cardElement.style.opacity = '1';
+            pendingAssignment.cardElement.style.pointerEvents = 'auto';
+        }
+        
+        pendingAssignment = null;
+        document.getElementById('assignModal').classList.remove('show');
+    }
+
+    async function confirmAssignment() {
+        if (!pendingAssignment) return;
+        
+        // Get selected user IDs and their details
+        const selectedCheckboxes = Array.from(document.querySelectorAll('.assign-checkbox:checked'));
+        const selectedUserIds = selectedCheckboxes.map(cb => cb.value);
+        
+        if (selectedUserIds.length === 0) {
+            showNotification('Please select at least one team member', 'error');
+            return;
+        }
+        
+        // Get user details for UI update
+        const selectedUsers = selectedCheckboxes.map(cb => {
+            const label = cb.closest('.team-member-checkbox').querySelector('label');
+            const name = label.querySelector('.member-name').textContent;
+            const avatar = label.querySelector('.member-avatar').textContent;
+            return { id: cb.value, name, avatar };
+        });
+        
+        const { areaId, targetColumn, cardElement, targetContainer } = pendingAssignment;
+        
+        try {
+            const url = '/ufo-app/api/assign-users-to-area';
+            const body = `areaId=${areaId}&userIds=${selectedUserIds.join(',')}&status=${targetColumn.toUpperCase()}`;
+            
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: body
+            });
+            
+            const responseText = await response.text();
+            
+            if (response.ok) {
+                // Add assignee section to the card
+                addAssigneesToCard(cardElement, selectedUsers);
+                
+                // Success - move card and close modal
+                targetContainer.appendChild(cardElement);
+                updateColumnCounts();
+                
+                // Update sidebar counts
+                updateSidebarCounts();
+                
+                cardElement.style.opacity = '1';
+                cardElement.style.pointerEvents = 'auto';
+                
+                closeAssignModal();
+                showNotification(`Assigned to ${selectedUserIds.length} team member(s)!`, 'success');
+            } else {
+                showNotification('Failed to assign: ' + responseText, 'error');
+            }
+        } catch (error) {
+            showNotification('Network error: ' + error.message, 'error');
+        }
+    }
+</script>
+
+</body>
+</html>
+
