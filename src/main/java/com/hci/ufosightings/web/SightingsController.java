@@ -82,6 +82,9 @@ public class SightingsController {
     public String viewSighting(@PathVariable Long id, Model model) {
         List<Sighting> allSightings = sightingService.getAllSightings();
         model.addAttribute("sightings", allSightings);
+        Map<Long, String> areasMap = areaService.getAllAreas().stream()
+                .collect(Collectors.toMap(a -> a.getAreaId(), a -> a.getAreaName()));
+        model.addAttribute("areasMap", areasMap);
         
         Optional<Sighting> sighting = sightingService.getSightingById(id);
         if (sighting.isPresent()) {
