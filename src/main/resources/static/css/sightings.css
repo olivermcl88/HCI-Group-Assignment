@@ -57,6 +57,7 @@ body {
     font-size: 48px;
     font-weight: 800;
     margin-bottom: 20px;
+    color: #333;
 }
 
 .profile {
@@ -81,7 +82,7 @@ body {
 
 .meta {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 0.3fr);
     gap: 20px;
     margin: 20px 0;
 }
@@ -663,4 +664,108 @@ textarea {
     margin: 0;
     font-size: 32px;
     color: #333;
+}
+
+/* Dashboard layout and card styles */
+.dashboard {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    align-items: start;
+}
+
+.left-column .assignments {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+}
+
+.assignment-card,
+.dashboard-card {
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 16px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+}
+
+.assignment-card h4 {
+    margin: 0 0 8px 0;
+    font-size: 18px;
+}
+
+.assignment-meta {
+    color: #666;
+    font-size: 14px;
+    margin-top: 8px;
+}
+
+.right-column .right-top {
+    margin-bottom: 0;
+}
+
+.right-bottom-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.assignment-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap; /* allow buttons to wrap instead of overlapping */
+}
+
+.assignment-actions .add-btn {
+    background: #30963d;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid rgba(0,0,0,0.05);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 140px;
+}
+
+.assignment-actions .btn {
+    background: #eee;
+    color: #333;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 100px;
+}
+
+/* Stack actions vertically on very narrow cards */
+@media (max-width: 420px) {
+    .assignment-actions { flex-direction: column; align-items: stretch; }
+    .assignment-actions .add-btn,
+    .assignment-actions .btn { width: 100%; min-width: 0; }
+}
+
+/* Ensure assignment cards stack to a single column on narrow screens */
+@media (max-width: 700px) {
+    .left-column .assignments {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Make dashboard stack on small screens */
+@media (max-width: 900px) {
+    .container {
+        padding: 16px;
+    }
+    .dashboard {
+        grid-template-columns: 1fr;
+    }
+    .right-bottom-grid {
+        grid-template-columns: 1fr;
+    }
 }

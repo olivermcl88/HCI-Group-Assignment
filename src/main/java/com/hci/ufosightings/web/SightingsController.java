@@ -2,7 +2,6 @@ package com.hci.ufosightings.web;
 
 import com.hci.ufosightings.common.Sighting;
 import com.hci.ufosightings.common.User;
-import com.hci.ufosightings.common.Vote;
 import com.hci.ufosightings.dto.CommentWithUser;
 import com.hci.ufosightings.service.AreaService;
 import com.hci.ufosightings.service.CommentService;
@@ -30,9 +29,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
+import java.util.stream.Collectors;
 import java.util.ArrayList;
 
 @Controller
@@ -62,10 +63,22 @@ public class SightingsController {
     public String sightings(Model model) {
         List<Sighting> allSightings = sightingService.getAllSightings();
         model.addAttribute("sightings", allSightings);
-        
+        Map<Long, String> areasMap = areaService.getAllAreas().stream()
+                .collect(Collectors.toMap(a -> a.getAreaId(), a -> a.getAreaName()));
+        model.addAttribute("areasMap", areasMap);
+
         if (!allSightings.isEmpty()) {
             Sighting firstSighting = allSightings.getFirst();
-            addSightingDetailsToModel(firstSighting, model);
+            model.addAttribute("currentSighting", firstSighting);
+            
+            User reporter = userService.getUserById(firstSighting.getReporterUserId());
+            model.addAttribute("reporter", reporter);
+            
+            List<CommentWithUser> allComments = commentService.getCommentsBySightingId(firstSighting.getSightingId());
+            List<CommentWithUser> comments = allComments.stream()
+                .filter(comment -> !comment.getCommentText().startsWith("📎 Evidence uploaded:"))
+                .collect(java.util.stream.Collectors.toList());
+            model.addAttribute("comments", comments);
         }
         
         return "sightings";
@@ -78,7 +91,16 @@ public class SightingsController {
         
         Optional<Sighting> sighting = sightingService.getSightingById(id);
         if (sighting.isPresent()) {
-            addSightingDetailsToModel(sighting.get(), model);
+            model.addAttribute("currentSighting", sighting.get());
+            
+            User reporter = userService.getUserById(sighting.get().getReporterUserId());
+            model.addAttribute("reporter", reporter);
+            
+            List<CommentWithUser> allComments = commentService.getCommentsBySightingId(id);
+            List<CommentWithUser> comments = allComments.stream()
+                .filter(comment -> !comment.getCommentText().startsWith("📎 Evidence uploaded:"))
+                .collect(java.util.stream.Collectors.toList());
+            model.addAttribute("comments", comments);
         } else {
             return "redirect:/sightings";
         }
@@ -147,8 +169,15 @@ public class SightingsController {
     }
 
     @GetMapping("sightings/new")
-    public String showNewSightingForm(Model model) {
-        model.addAttribute("sighting", new Sighting());
+    public String showNewSightingForm(Model model, @RequestParam(required = false) Long areaId) {
+        Sighting s = new Sighting();
+        model.addAttribute("areas", areaService.getAllAreas());
+        if (areaId != null) {
+            s.setAreaId(areaId);
+            model.addAttribute("areaId", areaId);
+            areaService.getAreaById(areaId).ifPresent(area -> model.addAttribute("areaName", area.getAreaName()));
+        }
+        model.addAttribute("sighting", s);
         return "report-sighting";
     }
 
@@ -160,7 +189,17 @@ public class SightingsController {
                                     @RequestParam(required = false) Double latitude,
                                     @RequestParam(required = false) Double longitude,
                                     @RequestParam(required = false) String shape,
-                                    @RequestParam(required = false) String description) {
+                                    @RequestParam(required = false) String description,
+                                    @RequestParam(required = false) String areaId) {
+
+        Long parsedAreaId = null;
+        if (areaId != null && !areaId.trim().isEmpty()) {
+            try {
+                parsedAreaId = Long.parseLong(areaId);
+            } catch (NumberFormatException ex) {
+                log.warn("Invalid areaId submitted: {}", areaId);
+            }
+        }
 
         Sighting s = Sighting.builder()
                 .title(title)
@@ -172,6 +211,7 @@ public class SightingsController {
                 .longitude(longitude)
                 .shape(shape)
                 .description(description)
+                .areaId(parsedAreaId)
                 .legitVotes(0)
                 .uncertainVotes(0)
                 .hoaxVotes(0)
@@ -312,49 +352,6 @@ public class SightingsController {
             log.error("Failed to download evidence file: " + filename, e);
         }
         return ResponseEntity.notFound().build();
-    }
-    
-    private void addSightingDetailsToModel(Sighting sighting, Model model) {
-        Long sightingId = sighting.getSightingId();
-        
-        // Add the sighting itself
-        model.addAttribute("currentSighting", sighting);
-        
-        // Get reporter info
-        User reporter = userService.getUserById(sighting.getReporterUserId());
-        model.addAttribute("reporter", reporter);
-        
-        // Get filtered comments (exclude evidence comments)
-        List<CommentWithUser> allComments = commentService.getCommentsBySightingId(sightingId);
-        List<CommentWithUser> comments = allComments.stream()
-            .filter(comment -> !comment.getCommentText().startsWith("📎 Evidence uploaded:"))
-            .collect(java.util.stream.Collectors.toList());
-        model.addAttribute("comments", comments);
-        
-        // Get vote counts
-        long legitVotes = voteService.getLegitVotes(sightingId);
-        long uncertainVotes = voteService.getUncertainVotes(sightingId);
-        long hoaxVotes = voteService.getHoaxVotes(sightingId);
-        long totalVotes = legitVotes + uncertainVotes + hoaxVotes;
-        
-        // Calculate percentages
-        int legitPercentage = totalVotes > 0 ? (int) Math.round((double) legitVotes / totalVotes * 100) : 0;
-        int uncertainPercentage = totalVotes > 0 ? (int) Math.round((double) uncertainVotes / totalVotes * 100) : 0;
-        int hoaxPercentage = totalVotes > 0 ? (int) Math.round((double) hoaxVotes / totalVotes * 100) : 0;
-        
-        model.addAttribute("legitVotes", legitVotes);
-        model.addAttribute("uncertainVotes", uncertainVotes);
-        model.addAttribute("hoaxVotes", hoaxVotes);
-        model.addAttribute("totalVotes", totalVotes);
-        model.addAttribute("legitPercentage", legitPercentage);
-        model.addAttribute("uncertainPercentage", uncertainPercentage);
-        model.addAttribute("hoaxPercentage", hoaxPercentage);
-        
-        // Get current user's vote (using default user ID 1 for demo)
-        Long currentUserId = 1L; // In a real app, this would come from the session/authentication
-        Optional<Vote> userVote = voteService.getUserVote(sightingId, currentUserId);
-        model.addAttribute("userVote", userVote.orElse(null));
-        model.addAttribute("currentUserId", currentUserId);
     }
 
 }
