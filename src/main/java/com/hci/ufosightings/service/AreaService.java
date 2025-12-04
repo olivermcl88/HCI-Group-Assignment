@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -28,6 +29,11 @@ public class AreaService {
 
     public List<Area> getAllAreas() {
         return areaDao.findAll();
+    }
+
+    public Optional<Area> getAreaById(Long areaId) {
+        return areaDao.findById(areaId);
+
     }
 
     public List<User> getAssignedUsers(Long areaId) {
@@ -104,4 +110,5 @@ public class AreaService {
 
         return response;
     }
+;
 }

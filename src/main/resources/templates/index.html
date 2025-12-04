@@ -1,27 +1,35 @@
 <!DOCTYPE html>
-<html>
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <title>UFO Sightings - Home</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 40px; background: #f5f5f5; }
-        .container { max-width: 600px; margin: auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .container { max-width: 800px; margin: auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         h1 { color: #30963d; }
+        .top-bar { display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px; }
+        .logged-in { color:#333; font-size:14px; }
+        .logged-in a { color:#30963d; text-decoration:none; font-weight:600; }
         .nav-links { margin: 20px 0; }
         .nav-links a { display: inline-block; margin: 10px 15px 10px 0; padding: 12px 20px; background: #30963d; color: white; text-decoration: none; border-radius: 5px; transition: background 0.3s; }
         .nav-links a:hover { background: #236b2f; }
+        .small-note { color:#666; margin-top:10px; font-size:13px; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Welcome to UFO Sightings Database</h1>
-        <p>Explore and document UFO sightings from around Scotland.</p>
+        <div class="top-bar">
+            <h1>Welcome to UFO Sightings Database</h1>
+            <div class="logged-in">Logged in as <a th:href="@{/reporter-dashboard/{id}(id=${currentUser != null ? currentUser.userId : 1})}" th:text="${currentUser != null ? currentUser.username : 'User 1'}">User 1</a></div>
+        </div>
+        <p>Explore and document UFO sightings.</p>
         
         <div class="nav-links">
             <a href="/ufo-app/sightings">View All Sightings</a>
             <a href="/ufo-app/assignments">View All Assignments</a>
             <a href="/ufo-app/hello-world">View System Data</a>
+            <a href="/ufo-app/reporter-dashboard/1">Reporter Dashboard</a>
         </div>
-    </div>
-</body>
-</html>
+     </div>
+ </body>
+ </html>

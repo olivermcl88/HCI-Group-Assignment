@@ -19,4 +19,9 @@ public class CommentWithUser {
     private Boolean isAnonymous;
     private String commenterUsername;
     private String commenterFirstName;
+    private String attachmentFilename;
+    private String attachmentOriginalName;
+    private Long parentCommentId;
+    private Integer replyLevel;
+    private String parentCommenterUsername;
 }

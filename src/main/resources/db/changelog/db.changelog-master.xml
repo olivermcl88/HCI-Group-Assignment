@@ -147,6 +147,7 @@
             <column name="longitude" type="DECIMAL(10,7)"/>
             <column name="shape" type="VARCHAR(100)"/>
             <column name="description" type="TEXT"/>
+            <column name="area_id" type="INT"/>
             <column name="legit_votes" type="INT" defaultValue="0"/>
             <column name="uncertain_votes" type="INT" defaultValue="0"/>
             <column name="hoax_votes" type="INT" defaultValue="0"/>
@@ -172,6 +173,7 @@
             <column header="legit_votes" name="legit_votes" type="NUMERIC"/>
             <column header="uncertain_votes" name="uncertain_votes" type="NUMERIC"/>
             <column header="hoax_votes" name="hoax_votes" type="NUMERIC"/>
+            <column header="area_id" name="area_id" type="NUMERIC"/>
         </loadData>
     </changeSet>
 
@@ -235,5 +237,21 @@
         <!-- Set the restart value to 1000 (safe value above existing test data) -->
         <sql>ALTER TABLE sightings ALTER COLUMN sighting_id RESTART WITH 1000;</sql>
     </changeSet>
+
+    <changeSet id="add-fk-sightings-area" author="rdev">
+        <addForeignKeyConstraint baseTableName="sightings" baseColumnNames="area_id"
+                                 constraintName="fk_sightings_area"
+                                 referencedTableName="area" referencedColumnNames="area_id"
+                                 onDelete="SET NULL"/>
+    </changeSet>
+
+    <!-- Include votes changelog -->
+    <include file="votes-changelog.xml" relativeToChangelogFile="true"/>
+
+    <!-- Include comment attachments changelog -->
+    <include file="comment-attachments.xml" relativeToChangelogFile="true"/>
+
+    <!-- Include comment replies changelog -->
+    <include file="comment-replies.xml" relativeToChangelogFile="true"/>
 
 </databaseChangeLog>

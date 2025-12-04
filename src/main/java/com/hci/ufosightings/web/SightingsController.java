@@ -8,6 +8,7 @@ import com.hci.ufosightings.service.CommentService;
 import com.hci.ufosightings.service.SightingService;
 import com.hci.ufosightings.service.TeamService;
 import com.hci.ufosightings.service.UserService;
+import com.hci.ufosightings.service.VoteService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
@@ -28,11 +29,12 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
-import java.util.ArrayList;
 import java.util.stream.Collectors;
+import java.util.ArrayList;
 
 @Controller
 @RequiredArgsConstructor
@@ -44,6 +46,7 @@ public class SightingsController {
     private final TeamService teamService;
     private final SightingService sightingService;
     private final CommentService commentService;
+    private final VoteService voteService;
 
     // A simple controller to return "Hello, World!" message and lists
     @GetMapping("hello-world")
@@ -60,7 +63,10 @@ public class SightingsController {
     public String sightings(Model model) {
         List<Sighting> allSightings = sightingService.getAllSightings();
         model.addAttribute("sightings", allSightings);
-        
+        Map<Long, String> areasMap = areaService.getAllAreas().stream()
+                .collect(Collectors.toMap(a -> a.getAreaId(), a -> a.getAreaName()));
+        model.addAttribute("areasMap", areasMap);
+
         if (!allSightings.isEmpty()) {
             Sighting firstSighting = allSightings.getFirst();
             model.addAttribute("currentSighting", firstSighting);
@@ -103,8 +109,15 @@ public class SightingsController {
     }
     
     @PostMapping("sightings/{id}/vote")
-    public String voteOnSighting(@PathVariable Long id, @RequestParam String voteType) {
-        sightingService.voteOnSighting(id, voteType);
+    public String voteOnSighting(@PathVariable Long id, 
+                               @RequestParam String voteType,
+                               @RequestParam(defaultValue = "1") Long userId) {
+        try {
+            voteService.castVote(id, userId, voteType);
+        } catch (IllegalArgumentException e) {
+            log.error("Invalid vote type: {}", voteType, e);
+            // Could add error message to model here
+        }
         return "redirect:/sightings/" + id;
     }
     
@@ -112,18 +125,59 @@ public class SightingsController {
     public String addComment(@PathVariable Long id, 
                            @RequestParam String commentText,
                            @RequestParam(defaultValue = "1") Long userId,
-                           @RequestParam(required = false) Boolean isAnonymous) {
+                           @RequestParam(required = false) Boolean isAnonymous,
+                           @RequestParam(value = "attachment", required = false) MultipartFile attachmentFile,
+                           @RequestParam(required = false) Long parentCommentId) {
+        
+        String attachmentFilename = null;
+        String attachmentOriginalName = null;
+        
+        // Handle file upload if present
+        if (attachmentFile != null && !attachmentFile.isEmpty()) {
+            try {
+                // Create uploads directory if it doesn't exist
+                Path uploadPath = Paths.get("uploads/comments");
+                if (!Files.exists(uploadPath)) {
+                    Files.createDirectories(uploadPath);
+                }
+                
+                // Generate unique filename
+                String originalFilename = attachmentFile.getOriginalFilename();
+                String cleanOriginalName = originalFilename != null ? originalFilename.replaceAll("[^a-zA-Z0-9.-]", "_") : "file";
+                attachmentFilename = "comment_" + id + "_" + UUID.randomUUID().toString() + "_" + cleanOriginalName;
+                attachmentOriginalName = originalFilename;
+                
+                // Save file
+                Path filePath = uploadPath.resolve(attachmentFilename);
+                Files.copy(attachmentFile.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+                
+                log.info("Comment attachment uploaded: {} for sighting {}", attachmentFilename, id);
+                
+            } catch (IOException e) {
+                log.error("Failed to upload comment attachment", e);
+                // Continue without attachment
+                attachmentFilename = null;
+                attachmentOriginalName = null;
+            }
+        }
         
         if (commentText != null && !commentText.trim().isEmpty()) {
-            commentService.addComment(id, userId, commentText.trim(), isAnonymous);
+            commentService.addComment(id, userId, commentText.trim(), isAnonymous, attachmentFilename, attachmentOriginalName, parentCommentId);
         }
         
         return "redirect:/sightings/" + id;
     }
 
     @GetMapping("sightings/new")
-    public String showNewSightingForm(Model model) {
-        model.addAttribute("sighting", new Sighting());
+    public String showNewSightingForm(Model model, @RequestParam(required = false) Long areaId) {
+        Sighting s = new Sighting();
+        model.addAttribute("areas", areaService.getAllAreas());
+        if (areaId != null) {
+            s.setAreaId(areaId);
+            model.addAttribute("areaId", areaId);
+            areaService.getAreaById(areaId).ifPresent(area -> model.addAttribute("areaName", area.getAreaName()));
+        }
+        model.addAttribute("sighting", s);
         return "report-sighting";
     }
 
@@ -135,7 +189,17 @@ public class SightingsController {
                                     @RequestParam(required = false) Double latitude,
                                     @RequestParam(required = false) Double longitude,
                                     @RequestParam(required = false) String shape,
-                                    @RequestParam(required = false) String description) {
+                                    @RequestParam(required = false) String description,
+                                    @RequestParam(required = false) String areaId) {
+
+        Long parsedAreaId = null;
+        if (areaId != null && !areaId.trim().isEmpty()) {
+            try {
+                parsedAreaId = Long.parseLong(areaId);
+            } catch (NumberFormatException ex) {
+                log.warn("Invalid areaId submitted: {}", areaId);
+            }
+        }
 
         Sighting s = Sighting.builder()
                 .title(title)
@@ -147,6 +211,7 @@ public class SightingsController {
                 .longitude(longitude)
                 .shape(shape)
                 .description(description)
+                .areaId(parsedAreaId)
                 .legitVotes(0)
                 .uncertainVotes(0)
                 .hoaxVotes(0)
@@ -174,10 +239,6 @@ public class SightingsController {
                 // Generate unique filename that preserves original name
                 String originalFilename = file.getOriginalFilename();
                 String cleanOriginalName = originalFilename != null ? originalFilename.replaceAll("[^a-zA-Z0-9.-]", "_") : "file";
-                String fileExtension = "";
-                if (originalFilename != null && originalFilename.contains(".")) {
-                    fileExtension = originalFilename.substring(originalFilename.lastIndexOf("."));
-                }
                 String filename = "evidence_" + id + "_" + UUID.randomUUID().toString() + "_" + cleanOriginalName;
 
                 // Save file
@@ -257,6 +318,23 @@ public class SightingsController {
             log.error("Failed to cleanup evidence comments", e);
         }
         return "redirect:/sightings";
+    }
+
+    @GetMapping("comment-attachment/{filename}")
+    public ResponseEntity<Resource> downloadCommentAttachment(@PathVariable String filename) {
+        try {
+            Path filePath = Paths.get("uploads/comments").resolve(filename);
+            Resource resource = new UrlResource(filePath.toUri());
+            
+            if (resource.exists() && resource.isReadable()) {
+                return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + resource.getFilename() + "\"")
+                    .body(resource);
+            }
+        } catch (Exception e) {
+            log.error("Failed to download comment attachment: " + filename, e);
+        }
+        return ResponseEntity.notFound().build();
     }
 
     @GetMapping("evidence/{filename}")
