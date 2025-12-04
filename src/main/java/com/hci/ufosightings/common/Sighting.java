@@ -57,6 +57,9 @@ public class Sighting {
     @Column(name = "hoax_votes")
     private Integer hoaxVotes;
     
+    @Column(name = "area_id")
+    private Long areaId;
+
     public int getTotalVotes() {
         return (legitVotes != null ? legitVotes : 0) + 
                (uncertainVotes != null ? uncertainVotes : 0) + 

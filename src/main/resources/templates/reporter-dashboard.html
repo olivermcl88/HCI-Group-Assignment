@@ -1,70 +1,144 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="">
-<style>
-    div.div1 {
-    width: 45%;
-    display: inline-block;
-    float: left;
-    background-color: gray;
-    margin-right: 2.5%;
-    margin-left: 2.5%;
-    }
-    ul {
-    list-style-type: none;
-    }
-</style>
 <head>
     <meta charset="UTF-8">
-    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/ufo-app/css/styles.css" />
+    <link rel="stylesheet" href="/ufo-app/css/sightings.css" />
     <title>Reporter Dashboard</title>
 </head>
 <body>
-<h1>Dashboard</h1>
+    <div class="container">
+        <div class="page-header">
+            <h1>Dashboard</h1>
+            <a th:href="@{/sightings}" class="btn">Back to Sightings</a>
+        </div>
 
-<div th:insert="navbar :: navbar">  </div>
+        <div th:insert="navbar :: navbar">  </div>
 
-<div class="div1">
-    <h3 align="center">My Assignments</h3>
-    <ul>
-        <li th:each="assignment : ${areaAssignments}">
-            <span th:text="${assignment.assignedAt}"></span>
-            <span th:text="${assignment.status}"></span>
-        </li>
-        <li th:if="${areaAssignments == null or #lists.isEmpty(areaAssignments)}">No current assignments.</li>
-    </ul>
-</div>
-<div class="div1">
-    <h3 align="center">Team's Recent Activity</h3>
-        <ul>
-            <li th:each="activity : ${activities}">
-                <span th:text="${activity.activityName}"></span>
-                <span th:text="${activity.activityData}"></span>
-            </li>
-            <li th:if="${activities == null or #lists.isEmpty(activities)}">No recent activity.</li>
-        </ul>
-    <div class="div1">
-        <h3 align="center">Notifications</h3>
-        <ul>
-            <li th:each="notification : ${notifications}">
-                <span th:text="${notification.title}"></span>
-                <span th:text="${notification.message}"></span>
-            </li>
-            <li th:if="${notifications == null or #lists.isEmpty(notifications)}">No recent notifications.</li>
-        </ul>
-        <div class="div1" align="left"><button>Open All</button></div>
-        <div class="div1" align="right"><button>Clear All</button></div>
-    </div>
-    <div class="div1">
-        <h3 align="center">Team Chat</h3>
-        <ul>
-            <li th:each="chat : ${chatLog}">
-                <span th:text="${chat.chatType}"></span>
-            </li>
-            <li th:if="${chatLog == null or #lists.isEmpty(chatLog)}">No new messages.</li>
-        </ul>
-        <div align="right"><button>Open Live Chat</button></div>
-    </div>
-</div>
+        <div class="dashboard">
+            <div class="left-column">
+                <div class="assignments">
+                    <div class="assignment-card" th:each="assignment : ${areaAssignments}">
+                        <h4 th:text="${assignment.area.areaName}">Area Name</h4>
+                        <div class="assignment-meta">
+                            Assigned: <span th:text="${#temporals.format(assignment.assignedAt, 'dd/MM/yyyy')}">01/01/2025</span>
+                            <span th:text="${assignment.status}">Status</span>
+                        </div>
+                        <div style="margin-top:10px; color:#666; font-size:14px;" th:text="${assignment.area.areaPriority}">Priority</div>
+                        <span style="margin-top:10px; color:#666; font-size:14px;">Reporter(s) Assigned:</span>
+                        <div style="margin-top:10px; color:#333; font-size:14px;">
+                          <ul th:if="${assignment.area.assignedUsers != null and !#lists.isEmpty(assignment.area.assignedUsers)}"
+                              style="display:flex; gap:8px; list-style:none; margin:0; padding:0; align-items:center;">
+                            <li th:each="user : ${assignment.area.assignedUsers}"
+                                th:text="${user.username != null and #strings.length(user.username) > 0 ? #strings.toUpperCase(#strings.substring(user.username,0,1)) : ''}"
+                                class="profile-circle" style="display:inline-flex; align-items:center; justify-content:center;">A</li>
+                          </ul>
+                          <div th:if="${assignment.area.assignedUsers == null or #lists.isEmpty(assignment.area.assignedUsers)}">No users assigned</div>
+                        </div>
+                        <div class="assignment-actions" style="margin-top:12px;">
+                            <!-- Report Sighting: open report form and include areaId as a query param -->
+                            <a th:href="@{/sightings/new(areaId=${assignment.area.areaId})}" class="btn add-btn" role="button" aria-label="Report sighting in this area">Report Sighting</a>
+                            <!-- View Area: dummy button for now -->
+                            <button type="button" class="btn" aria-label="View area">View Area</button>
+                        </div>
+                    </div>
+                    <div class="assignment-card" th:if="${areaAssignments == null or #lists.isEmpty(areaAssignments)}">
+                        <h4>No current assignments</h4>
+                        <div class="assignment-meta">You have no active assignments at the moment.</div>
+                    </div>
+                </div>
+            </div>
 
-</body>
-</html>
+            <!-- Right column: activity, notifications, chat -->
+            <div class="right-column">
+                <div class="dashboard-card right-top">
+                    <h3>Team's Recent Activity</h3>
+                    <ul>
+                        <li th:each="activity : ${activities}">
+                            <div>
+                                <strong th:text="${activity.activityName}">Activity</strong>
+                                <div style="color:#666; font-size:14px;" th:text="${activity.activityData}">Details</div>
+                            </div>
+                        </li>
+                        <li th:if="${activities == null or #lists.isEmpty(activities)}">No recent activity.</li>
+                    </ul>
+                </div>
+
+                <div class="right-bottom-grid">
+                    <div class="dashboard-card">
+                        <h3>Notifications</h3>
+                        <div class="notifications-list">
+                            <div class="notification-card" th:each="notification : ${notifications}" th:attr="data-id=${notification.notiId}">
+                                <button class="close-btn" type="button" aria-label="Dismiss" th:onclick="|dismissNotification('${notification.notiId}')|">×</button>
+                                <strong th:text="${notification.title}">Title</strong>
+                                <div class="notification-message" th:text="${notification.message}">Message</div>
+                            </div>
+                            <div class="notification-card" th:if="${notifications == null or #lists.isEmpty(notifications)}">
+                                <strong>No recent notifications.</strong>
+                            </div>
+                        </div>
+                         <div style="display:flex; justify-content:space-between; margin-top:10px;">
+                             <button class="btn">Open All</button>
+                             <button class="btn">Clear All</button>
+                         </div>
+                     </div>
+
+                    <div class="dashboard-card">
+                        <h3>Team Chat</h3>
+                        <div class="chat-list">
+                            <div class="chat-card" th:each="chat : ${chatLog}" th:attr="data-chat-id=${chat.chatId}">
+                                <button class="close-btn" type="button" aria-label="Dismiss chat" th:onclick="|dismissChat('${chat.chatId}')|">×</button>
+                                <div class="chat-sender" th:text="${chat.chatType}">Chat</div>
+                                <div class="chat-message" th:text="${chat.message}">Message</div>
+                                <div class="chat-meta" th:text="${#temporals.format(chat.createdAt, 'dd/MM/yyyy HH:mm')}"></div>
+                            </div>
+                            <div class="chat-card" th:if="${chatLog == null or #lists.isEmpty(chatLog)}">
+                                <strong>No new messages.</strong>
+                            </div>
+                        </div>
+                        <div style="text-align:right; margin-top:10px;"><button class="btn">Open Live Chat</button></div>
+                     </div>
+                 </div>
+             </div>
+         </div>
+
+     </div>
+
+     <script>
+         // Dismiss a notification card and optionally call server to delete it.
+         function dismissNotification(id) {
+             // remove from DOM with a small transition
+             var selector = '[data-id="' + id + '"]';
+             var el = document.querySelector(selector);
+             if (!el) return;
+             el.classList.add('dismiss');
+             setTimeout(function() { el.remove(); }, 180);
+
+             // If the notification has an id, attempt to DELETE it on the server
+             if (id) {
+                 fetch('/api/notifications/' + encodeURIComponent(id), { method: 'DELETE' })
+                     .then(function(resp){
+                         // optional: handle non-2xx responses
+                         if (!resp.ok) console.warn('Failed to delete notification', resp.status);
+                     }).catch(function(err){ console.warn('Error deleting notification', err); });
+             }
+         }
+
+        // Dismiss a chat card and optionally call server to delete the chat message
+        function dismissChat(id) {
+            var selector = '[data-chat-id="' + id + '"]';
+            var el = document.querySelector(selector);
+            if (!el) return;
+            el.classList.add('dismiss');
+            setTimeout(function() { el.remove(); }, 180);
+
+            if (id) {
+                fetch('/api/chat/' + encodeURIComponent(id), { method: 'DELETE' })
+                    .then(function(resp){ if (!resp.ok) console.warn('Failed to delete chat', resp.status); })
+                    .catch(function(err){ console.warn('Error deleting chat', err); });
+            }
+        }
+     </script>
+ </body>
+ </html>

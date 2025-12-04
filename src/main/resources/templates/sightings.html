@@ -6,22 +6,25 @@
     <title>Sighting Details</title>
     
     <link rel="stylesheet" href="/ufo-app/css/sightings.css" />
+    <link rel="stylesheet" href="/ufo-app/css/styles.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 </head>
 <body>
     <div class="container">
+        <div th:insert="navbar :: navbar">  </div>
+
         <!-- Navigation for different sightings -->
         <div th:if="${sightings != null and !sightings.isEmpty()}" class="sightings-nav">
             <div class="sightings-nav-header">
                 <h3>All Sightings:</h3>
-                <a th:href="@{/sightings/new}" class="btn add-btn">+ Report Sighting</a>
+                <a th:href="@{/sightings/new}" class="btn add-btn" style="color:white">+ Report Sighting</a>
             </div>
             <ul>
                 <li th:each="sighting : ${sightings}">
-                    <a th:href="@{/sightings/{id}(id=${sighting.sightingId})}" 
-                       th:text="${sighting.title}"
+                    <a th:href="@{/sightings/{id}(id=${sighting.sightingId})}"
                        th:class="${currentSighting != null and currentSighting.sightingId == sighting.sightingId} ? 'active' : ''">
-                       Sighting Title
+                        <span th:text="${sighting.title}">Sighting Title</span>
+                        <small th:class="${currentSighting != null and currentSighting.sightingId == sighting.sightingId} ? 'active' : ''" th:text="${areasMap != null && sighting.areaId != null ? areasMap[sighting.areaId] : ''}"></small>
                     </a>
                 </li>
             </ul>
@@ -40,6 +43,7 @@
 
             <div class="meta">
                 <div class="meta-item">📅 <span th:text="${#temporals.format(currentSighting.sightingDate, 'dd/MM/yyyy')}">01/01/25</span></div>
+                <div class="meta-item">📌 <span th:text="${currentSightingAreaName != null ? currentSightingAreaName : (areasMap != null && currentSighting.areaId != null ? areasMap[currentSighting.areaId] : '')}">Area Name</span></div>
                 <div class="meta-item">⏱️ <span th:text="${currentSighting.durationMinutes}">12</span> minutes</div>
                 <div class="meta-item">📍 <span th:text="${currentSighting.location}">Location</span><br/>
                     <span th:text="${currentSighting.latitude + ', ' + currentSighting.longitude}">Coordinates</span>
