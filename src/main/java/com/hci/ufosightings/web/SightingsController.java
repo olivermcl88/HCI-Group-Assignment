@@ -48,17 +48,6 @@ public class SightingsController {
     private final CommentService commentService;
     private final VoteService voteService;
 
-    // A simple controller to return "Hello, World!" message and lists
-    @GetMapping("hello-world")
-    public String helloWorld(Model model) {
-        // call services and add lists to the model
-        model.addAttribute("users", userService.getAllUsers());
-        model.addAttribute("areas", areaService.getAllAreas());
-        model.addAttribute("teams", teamService.getAllTeams());
-
-        return "hello-world";
-    }
-
     @GetMapping("sightings")
     public String sightings(Model model) {
         List<Sighting> allSightings = sightingService.getAllSightings();
@@ -79,6 +68,11 @@ public class SightingsController {
                 .filter(comment -> !comment.getCommentText().startsWith("📎 Evidence uploaded:"))
                 .collect(java.util.stream.Collectors.toList());
             model.addAttribute("comments", comments);
+
+            // Add vote stats to model (default/demo current user id = 1)
+            Long currentUserId = 1L;
+            model.addAttribute("currentUserId", currentUserId);
+            addVoteStatsToModel(model, firstSighting.getSightingId(), currentUserId);
         }
         
         return "sightings";
@@ -101,6 +95,11 @@ public class SightingsController {
                 .filter(comment -> !comment.getCommentText().startsWith("📎 Evidence uploaded:"))
                 .collect(java.util.stream.Collectors.toList());
             model.addAttribute("comments", comments);
+
+            // Add vote stats to model (default/demo current user id = 1)
+            Long currentUserId = 1L;
+            model.addAttribute("currentUserId", currentUserId);
+            addVoteStatsToModel(model, id, currentUserId);
         } else {
             return "redirect:/sightings";
         }
@@ -352,6 +351,48 @@ public class SightingsController {
             log.error("Failed to download evidence file: " + filename, e);
         }
         return ResponseEntity.notFound().build();
+    }
+
+    // Helper to add vote counts, percentages and current user's vote to the model
+    private void addVoteStatsToModel(Model model, Long sightingId, Long currentUserId) {
+        long legitVotes = voteService.getLegitVotes(sightingId);
+        long uncertainVotes = voteService.getUncertainVotes(sightingId);
+        long hoaxVotes = voteService.getHoaxVotes(sightingId);
+        long totalVotes = voteService.getTotalVotes(sightingId);
+
+        int legitPercentage = 0;
+        int uncertainPercentage = 0;
+        int hoaxPercentage = 0;
+
+        if (totalVotes > 0) {
+            legitPercentage = (int) Math.round((legitVotes * 100.0) / totalVotes);
+            uncertainPercentage = (int) Math.round((uncertainVotes * 100.0) / totalVotes);
+            hoaxPercentage = (int) Math.round((hoaxVotes * 100.0) / totalVotes);
+
+            // Ensure percentages sum to 100 (adjust the largest if rounding leaves a remainder)
+            int sum = legitPercentage + uncertainPercentage + hoaxPercentage;
+            if (sum != 100) {
+                int max = Math.max(legitPercentage, Math.max(uncertainPercentage, hoaxPercentage));
+                if (max == legitPercentage) {
+                    legitPercentage += 100 - sum;
+                } else if (max == uncertainPercentage) {
+                    uncertainPercentage += 100 - sum;
+                } else {
+                    hoaxPercentage += 100 - sum;
+                }
+            }
+        }
+
+        model.addAttribute("legitVotes", legitVotes);
+        model.addAttribute("uncertainVotes", uncertainVotes);
+        model.addAttribute("hoaxVotes", hoaxVotes);
+        model.addAttribute("totalVotes", totalVotes);
+        model.addAttribute("legitPercentage", legitPercentage);
+        model.addAttribute("uncertainPercentage", uncertainPercentage);
+        model.addAttribute("hoaxPercentage", hoaxPercentage);
+
+        // Current user's vote (optional)
+        voteService.getUserVote(sightingId, currentUserId).ifPresent(vote -> model.addAttribute("userVote", vote));
     }
 
 }
