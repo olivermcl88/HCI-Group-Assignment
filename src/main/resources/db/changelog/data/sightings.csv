@@ -1,7 +1,7 @@
 sighting_id,title,reporter_user_id,sighting_date,duration_minutes,location,latitude,longitude,shape,description,legit_votes,uncertain_votes,hoax_votes,area_id
 1,Triangle UFO Over Glasgow,1,2025-01-01,12,"Glasgow, Lanarkshire",55.873415,-4.289440,Triangle,"Bright triangular object moving silently across the night sky. Three distinct lights at each corner.",35,55,10,5
 2,Circular Craft in Edinburgh,2,2024-12-25,8,"Edinburgh, Scotland",55.9533,-3.1883,Circle,"Large circular object with rotating lights observed for several minutes before disappearing.",42,38,20,2
-3,Disk-Shaped Object Near Loch Ness,3,2024-12-20,15,"Loch Ness, Highland",57.2768,-4.5186,Disk,"Metallic disk-shaped craft hovering above the loch surface. Made no sound whatsoever.",28,45,27,3
+3,Disc-Shaped Object Near Loch Ness,3,2024-12-20,15,"Loch Ness, Highland",57.2768,-4.5186,Disc,"Metallic disc-shaped craft hovering above the loch surface. Made no sound whatsoever.",28,45,27,3
 4,Strange Lights in Aberdeen,4,2024-12-15,20,"Aberdeen, Scotland",57.1497,-2.0943,Unknown,"Multiple bright lights in formation moving erratically across the sky.",31,49,20,1
 5,Cylindrical UFO in Stirling,1,2024-12-10,6,"Stirling, Scotland",56.1165,-3.9369,Cylinder,"Long cylindrical object moving at high speed. No wings or propulsion visible.",25,50,25,5
 
