@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+
+    <changeSet id="create-votes-table" author="system">
+        <createTable tableName="votes">
+            <column name="vote_id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="sighting_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="user_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="vote_type" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="vote_date" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        
+        <!-- Ensure one vote per user per sighting -->
+        <addUniqueConstraint 
+            tableName="votes"
+            columnNames="sighting_id, user_id"
+            constraintName="unique_user_sighting_vote"/>
+    </changeSet>
+
+    <changeSet id="load-votes-data" author="system">
+        <loadData
+            tableName="votes"
+            file="db/changelog/data/votes.csv"
+            separator=","
+            quotchar='"'>
+            <column name="sighting_id" type="NUMERIC"/>
+            <column name="user_id" type="NUMERIC"/>
+            <column name="vote_type" type="STRING"/>
+            <column name="vote_date" type="DATE"/>
+        </loadData>
+    </changeSet>
+
+</databaseChangeLog>

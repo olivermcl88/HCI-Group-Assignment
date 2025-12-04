@@ -8,6 +8,7 @@ import com.hci.ufosightings.service.CommentService;
 import com.hci.ufosightings.service.SightingService;
 import com.hci.ufosightings.service.TeamService;
 import com.hci.ufosightings.service.UserService;
+import com.hci.ufosightings.service.VoteService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
@@ -32,8 +33,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
-import java.util.ArrayList;
 import java.util.stream.Collectors;
+import java.util.ArrayList;
 
 @Controller
 @RequiredArgsConstructor
@@ -45,6 +46,7 @@ public class SightingsController {
     private final TeamService teamService;
     private final SightingService sightingService;
     private final CommentService commentService;
+    private final VoteService voteService;
 
     // A simple controller to return "Hello, World!" message and lists
     @GetMapping("hello-world")
@@ -66,7 +68,7 @@ public class SightingsController {
         model.addAttribute("areasMap", areasMap);
 
         if (!allSightings.isEmpty()) {
-            Sighting firstSighting = allSightings.get(0);
+            Sighting firstSighting = allSightings.getFirst();
             model.addAttribute("currentSighting", firstSighting);
             
             User reporter = userService.getUserById(firstSighting.getReporterUserId());
@@ -77,10 +79,6 @@ public class SightingsController {
                 .filter(comment -> !comment.getCommentText().startsWith("📎 Evidence uploaded:"))
                 .collect(java.util.stream.Collectors.toList());
             model.addAttribute("comments", comments);
-            // add area name for current sighting if present
-            if (firstSighting.getAreaId() != null) {
-                areaService.getAreaById(firstSighting.getAreaId()).ifPresent(area -> model.addAttribute("currentSightingAreaName", area.getAreaName()));
-            }
         }
         
         return "sightings";
@@ -93,10 +91,9 @@ public class SightingsController {
         
         Optional<Sighting> sighting = sightingService.getSightingById(id);
         if (sighting.isPresent()) {
-            Sighting current = sighting.get();
-            model.addAttribute("currentSighting", current);
-
-            User reporter = userService.getUserById(current.getReporterUserId());
+            model.addAttribute("currentSighting", sighting.get());
+            
+            User reporter = userService.getUserById(sighting.get().getReporterUserId());
             model.addAttribute("reporter", reporter);
             
             List<CommentWithUser> allComments = commentService.getCommentsBySightingId(id);
@@ -104,19 +101,23 @@ public class SightingsController {
                 .filter(comment -> !comment.getCommentText().startsWith("📎 Evidence uploaded:"))
                 .collect(java.util.stream.Collectors.toList());
             model.addAttribute("comments", comments);
-            if (current.getAreaId() != null) {
-                areaService.getAreaById(current.getAreaId()).ifPresent(area -> model.addAttribute("currentSightingAreaName", area.getAreaName()));
-            }
-         } else {
-             return "redirect:/sightings";
-         }
-
-         return "sightings";
-     }
-
+        } else {
+            return "redirect:/sightings";
+        }
+        
+        return "sightings";
+    }
+    
     @PostMapping("sightings/{id}/vote")
-    public String voteOnSighting(@PathVariable Long id, @RequestParam String voteType) {
-        sightingService.voteOnSighting(id, voteType);
+    public String voteOnSighting(@PathVariable Long id, 
+                               @RequestParam String voteType,
+                               @RequestParam(defaultValue = "1") Long userId) {
+        try {
+            voteService.castVote(id, userId, voteType);
+        } catch (IllegalArgumentException e) {
+            log.error("Invalid vote type: {}", voteType, e);
+            // Could add error message to model here
+        }
         return "redirect:/sightings/" + id;
     }
     
@@ -124,10 +125,44 @@ public class SightingsController {
     public String addComment(@PathVariable Long id, 
                            @RequestParam String commentText,
                            @RequestParam(defaultValue = "1") Long userId,
-                           @RequestParam(required = false) Boolean isAnonymous) {
+                           @RequestParam(required = false) Boolean isAnonymous,
+                           @RequestParam(value = "attachment", required = false) MultipartFile attachmentFile,
+                           @RequestParam(required = false) Long parentCommentId) {
+        
+        String attachmentFilename = null;
+        String attachmentOriginalName = null;
+        
+        // Handle file upload if present
+        if (attachmentFile != null && !attachmentFile.isEmpty()) {
+            try {
+                // Create uploads directory if it doesn't exist
+                Path uploadPath = Paths.get("uploads/comments");
+                if (!Files.exists(uploadPath)) {
+                    Files.createDirectories(uploadPath);
+                }
+                
+                // Generate unique filename
+                String originalFilename = attachmentFile.getOriginalFilename();
+                String cleanOriginalName = originalFilename != null ? originalFilename.replaceAll("[^a-zA-Z0-9.-]", "_") : "file";
+                attachmentFilename = "comment_" + id + "_" + UUID.randomUUID().toString() + "_" + cleanOriginalName;
+                attachmentOriginalName = originalFilename;
+                
+                // Save file
+                Path filePath = uploadPath.resolve(attachmentFilename);
+                Files.copy(attachmentFile.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+                
+                log.info("Comment attachment uploaded: {} for sighting {}", attachmentFilename, id);
+                
+            } catch (IOException e) {
+                log.error("Failed to upload comment attachment", e);
+                // Continue without attachment
+                attachmentFilename = null;
+                attachmentOriginalName = null;
+            }
+        }
         
         if (commentText != null && !commentText.trim().isEmpty()) {
-            commentService.addComment(id, userId, commentText.trim(), isAnonymous);
+            commentService.addComment(id, userId, commentText.trim(), isAnonymous, attachmentFilename, attachmentOriginalName, parentCommentId);
         }
         
         return "redirect:/sightings/" + id;
@@ -204,10 +239,6 @@ public class SightingsController {
                 // Generate unique filename that preserves original name
                 String originalFilename = file.getOriginalFilename();
                 String cleanOriginalName = originalFilename != null ? originalFilename.replaceAll("[^a-zA-Z0-9.-]", "_") : "file";
-                String fileExtension = "";
-                if (originalFilename != null && originalFilename.contains(".")) {
-                    fileExtension = originalFilename.substring(originalFilename.lastIndexOf("."));
-                }
                 String filename = "evidence_" + id + "_" + UUID.randomUUID().toString() + "_" + cleanOriginalName;
 
                 // Save file
@@ -287,6 +318,23 @@ public class SightingsController {
             log.error("Failed to cleanup evidence comments", e);
         }
         return "redirect:/sightings";
+    }
+
+    @GetMapping("comment-attachment/{filename}")
+    public ResponseEntity<Resource> downloadCommentAttachment(@PathVariable String filename) {
+        try {
+            Path filePath = Paths.get("uploads/comments").resolve(filename);
+            Resource resource = new UrlResource(filePath.toUri());
+            
+            if (resource.exists() && resource.isReadable()) {
+                return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + resource.getFilename() + "\"")
+                    .body(resource);
+            }
+        } catch (Exception e) {
+            log.error("Failed to download comment attachment: " + filename, e);
+        }
+        return ResponseEntity.notFound().build();
     }
 
     @GetMapping("evidence/{filename}")

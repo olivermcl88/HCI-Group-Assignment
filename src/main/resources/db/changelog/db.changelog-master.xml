@@ -245,4 +245,13 @@
                                  onDelete="SET NULL"/>
     </changeSet>
 
+    <!-- Include votes changelog -->
+    <include file="votes-changelog.xml" relativeToChangelogFile="true"/>
+
+    <!-- Include comment attachments changelog -->
+    <include file="comment-attachments.xml" relativeToChangelogFile="true"/>
+
+    <!-- Include comment replies changelog -->
+    <include file="comment-replies.xml" relativeToChangelogFile="true"/>
+
 </databaseChangeLog>

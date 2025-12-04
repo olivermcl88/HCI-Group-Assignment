@@ -1,10 +1,7 @@
 package com.hci.ufosightings.web;
 
 import com.hci.ufosightings.service.AreaAssignmentsService;
-import com.hci.ufosightings.service.AreaService;
 import com.hci.ufosightings.service.NotificationService;
-import com.hci.ufosightings.service.TeamService;
-import com.hci.ufosightings.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
@@ -19,9 +16,6 @@ import java.util.Collections;
 @Slf4j
 public class ReporterDashBoardController {
 
-    private final UserService userService;
-    private final AreaService areaService;
-    private final TeamService teamService;
     private final NotificationService notificationService;
     private final AreaAssignmentsService areaAssignmentsService;
 
